@@ -1,0 +1,7 @@
+.env
+portfolio_state.json
+seen_news.json
+*.log
+__pycache__/
+*.pyc
+.DS_Store
