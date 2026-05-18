@@ -27,17 +27,25 @@ MACD_SIG = 9
 HIST_MIN = -10.0
 HIST_MAX = 2.0
 SMA_LEN = 50
+SMA_PCT = 0.02 # Minimum 2% above 50 SMA
 
 # Stocks Configuration (TradingView Symbols & Exchanges)
 STOCKS = {
-    "BRITANNIA": {"exchange": "NSE", "name": "Britannia", "tp": 0.30, "sl": 0.13, "trail_act": 0.13, "trail_buf": 0.06},
-    "EPL": {"exchange": "NSE", "name": "EPL", "tp": 0.29, "sl": 0.15, "trail_act": 0.06, "trail_buf": 0.04},
-    "APOLLOHOSP": {"exchange": "NSE", "name": "Apollo Hospitals", "tp": 0.27, "sl": 0.15, "trail_act": 0.06, "trail_buf": 0.04},
-    "BHARTIARTL": {"exchange": "NSE", "name": "Bharti Airtel", "tp": 0.29, "sl": 0.13, "trail_act": 0.15, "trail_buf": 0.10},
-    "TORNTPOWER": {"exchange": "NSE", "name": "Torrent Power", "tp": 0.29, "sl": 0.15, "trail_act": 0.15, "trail_buf": 0.09},
-    "PIDILITIND": {"exchange": "NSE", "name": "Pidilite", "tp": 0.28, "sl": 0.15, "trail_act": 0.15, "trail_buf": 0.09},
-    "NATCOPHARM": {"exchange": "NSE", "name": "Natco Pharma", "tp": 0.35, "sl": 0.14, "trail_act": 0.18, "trail_buf": 0.09},
-    "TVSMOTOR": {"exchange": "NSE", "name": "TVS Motors", "tp": 0.35, "sl": 0.13, "trail_act": 0.16, "trail_buf": 0.08},
+    "BRITANNIA": {"exchange": "NSE", "name": "Britannia", "tp": 0.25, "sl": 0.20, "trail_act": 0.16, "trail_buf": 0.08},
+    "EPL": {"exchange": "NSE", "name": "EPL", "tp": 0.29, "sl": 0.21, "trail_act": 0.06, "trail_buf": 0.04},
+    "APOLLOHOSP": {"exchange": "NSE", "name": "Apollo Hospitals", "tp": 0.27, "sl": 0.21, "trail_act": 0.06, "trail_buf": 0.04},
+    "BHARTIARTL": {"exchange": "NSE", "name": "Bharti Airtel", "tp": 0.30, "sl": 0.21, "trail_act": 0.06, "trail_buf": 0.04},
+    "TORNTPOWER": {"exchange": "NSE", "name": "Torrent Power", "tp": 0.29, "sl": 0.18, "trail_act": 0.06, "trail_buf": 0.03},
+    "PIDILITIND": {"exchange": "NSE", "name": "Pidilite", "tp": 0.28, "sl": 0.17, "trail_act": 0.08, "trail_buf": 0.05},
+    "NATCOPHARM": {"exchange": "NSE", "name": "Natco Pharma", "tp": 0.26, "sl": 0.14, "trail_act": 0.08, "trail_buf": 0.04},
+    "TVSMOTOR": {"exchange": "NSE", "name": "TVS Motors", "tp": 0.28, "sl": 0.14, "trail_act": 0.10, "trail_buf": 0.06},
+    "BEL": {"exchange": "NSE", "name": "Bharat Electronics", "tp": 0.33, "sl": 0.14, "trail_act": 0.33, "trail_buf": 0.00},
+    "GODREJCP": {"exchange": "NSE", "name": "Godrej Consumer Products", "tp": 0.25, "sl": 0.13, "trail_act": 0.25, "trail_buf": 0.00},
+    "SCHNEIDER": {"exchange": "NSE", "name": "Schneider Electric Infrastructure", "tp": 0.25, "sl": 0.22, "trail_act": 0.16, "trail_buf": 0.04},
+    "FORTIS": {"exchange": "NSE", "name": "Fortis Healthcare", "tp": 0.25, "sl": 0.24, "trail_act": 0.13, "trail_buf": 0.07},
+    "MAXHEALTH": {"exchange": "NSE", "name": "Max Healthcare", "tp": 0.25, "sl": 0.21, "trail_act": 0.10, "trail_buf": 0.04},
+    "LT": {"exchange": "NSE", "name": "Larsen & Toubro", "tp": 0.24, "sl": 0.19, "trail_act": 0.10, "trail_buf": 0.04},
+    "HAL": {"exchange": "NSE", "name": "Hindustan Aeronautics", "tp": 0.27, "sl": 0.17, "trail_act": 0.08, "trail_buf": 0.05},
 }
 
 # Initialize TradingView Datafeed
@@ -226,8 +234,8 @@ def analyze_stocks():
                 # 1. MACD Cooldown Condition 
                 is_cooled_off = (hist_line > HIST_MIN) and (hist_line <= HIST_MAX)
                 
-                # 2. Trend Condition (Price above 50 SMA)
-                is_trend_intact = current_close > sma_50
+                # 2. Trend Condition (Price minimum 2% above 50 SMA)
+                is_trend_intact = current_close > (sma_50 * (1 + SMA_PCT))
                 
                 if is_cooled_off and is_trend_intact:
                     # Enter Trade
