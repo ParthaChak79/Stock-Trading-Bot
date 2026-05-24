@@ -5,7 +5,10 @@ import requests
 import feedparser
 import schedule
 import time
-from datetime import datetime
+import re
+import string
+import yfinance as yf
+from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 from tvDatafeed import TvDatafeed, Interval
 
@@ -20,6 +23,57 @@ load_dotenv(ENV_FILE)
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
+# Global Timezones & Startup time
+IST = timezone(timedelta(hours=5, minutes=30))
+STARTUP_TIME = datetime.now(timezone.utc)
+
+# Sentiment vocabulary
+POSITIVE_WORDS = {
+    'profit', 'rise', 'rises', 'growth', 'grow', 'jump', 'jumps', 'surge', 'surges', 'gain', 'gains', 'upbeat', 'positive',
+    'bullish', 'expansion', 'expand', 'highest', 'record', 'exceed', 'exceeds', 'beat', 'beats', 'soar', 'soars', 'win', 'wins',
+    'buy', 'strong', 'outperform', 'upgrade', 'upgraded', 'recovery', 'recover', 'demand', 'revenue increase', 'acquisition'
+}
+NEGATIVE_WORDS = {
+    'loss', 'fall', 'falls', 'drop', 'drops', 'decline', 'declines', 'dip', 'dips', 'plunge', 'plunges', 'slump', 'slumps',
+    'negative', 'bearish', 'weak', 'weakness', 'down', 'cut', 'cuts', 'shrink', 'shrinks', 'hit', 'hits', 'deficit',
+    'fail', 'fails', 'miss', 'misses', 'debt', 'risk', 'risks', 'warn', 'warns', 'warning', 'sell', 'underperform',
+    'downgrade', 'downgraded', 'disruption', 'disruptions', 'pressure', 'pressures', 'slid', 'slide', 'slides'
+}
+
+def clean_title(title):
+    title = re.sub(r'\s+[-|]\s+.*$', '', title)
+    title = title.lower()
+    title = title.translate(str.maketrans('', '', string.punctuation))
+    return title.strip()
+
+def is_duplicate_title(new_title, seen_titles, threshold=0.6):
+    new_cleaned = clean_title(new_title)
+    new_words = set(new_cleaned.split())
+    if not new_words:
+        return False
+    for seen in seen_titles:
+        seen_cleaned = clean_title(seen)
+        seen_words = set(seen_cleaned.split())
+        if not seen_words:
+            continue
+        intersection = new_words.intersection(seen_words)
+        union = new_words.union(seen_words)
+        similarity = len(intersection) / len(union)
+        if similarity >= threshold:
+            return True
+    return False
+
+def analyze_sentiment(title, summary):
+    text = f"{title} {summary or ''}".lower()
+    pos_count = sum(1 for word in POSITIVE_WORDS if word in text)
+    neg_count = sum(1 for word in NEGATIVE_WORDS if word in text)
+    if pos_count > neg_count:
+        return "positive"
+    elif neg_count > pos_count:
+        return "negative"
+    else:
+        return "neutral"
+
 # Strategy Parameters
 MACD_FAST = 12
 MACD_SLOW = 26
@@ -31,14 +85,14 @@ SMA_PCT = 0.02 # Minimum 2% above 50 SMA
 
 # Stocks Configuration (TradingView Symbols & Exchanges)
 STOCKS = {
-    "BRITANNIA": {"exchange": "NSE", "name": "Britannia", "tp": 0.25, "sl": 0.20, "trail_act": 0.16, "trail_buf": 0.08},
-    "EPL": {"exchange": "NSE", "name": "EPL", "tp": 0.29, "sl": 0.21, "trail_act": 0.06, "trail_buf": 0.04},
-    "APOLLOHOSP": {"exchange": "NSE", "name": "Apollo Hospitals", "tp": 0.27, "sl": 0.21, "trail_act": 0.06, "trail_buf": 0.04},
-    "BHARTIARTL": {"exchange": "NSE", "name": "Bharti Airtel", "tp": 0.30, "sl": 0.21, "trail_act": 0.06, "trail_buf": 0.04},
-    "TORNTPOWER": {"exchange": "NSE", "name": "Torrent Power", "tp": 0.29, "sl": 0.18, "trail_act": 0.06, "trail_buf": 0.03},
-    "PIDILITIND": {"exchange": "NSE", "name": "Pidilite", "tp": 0.28, "sl": 0.17, "trail_act": 0.08, "trail_buf": 0.05},
-    "NATCOPHARM": {"exchange": "NSE", "name": "Natco Pharma", "tp": 0.26, "sl": 0.14, "trail_act": 0.08, "trail_buf": 0.04},
-    "TVSMOTOR": {"exchange": "NSE", "name": "TVS Motors", "tp": 0.28, "sl": 0.14, "trail_act": 0.10, "trail_buf": 0.06},
+    "BRITANNIA": {"exchange": "NSE", "name": "Britannia", "tp": 0.25, "sl": 0.20, "trail_act": 0.17, "trail_buf": 0.08},
+    "EPL": {"exchange": "NSE", "name": "EPL", "tp": 0.27, "sl": 0.18, "trail_act": 0.15, "trail_buf": 0.09},
+    "APOLLOHOSP": {"exchange": "NSE", "name": "Apollo Hospitals", "tp": 0.27, "sl": 0.18, "trail_act": 0.15, "trail_buf": 0.09},
+    "BHARTIARTL": {"exchange": "NSE", "name": "Bharti Airtel", "tp": 0.30, "sl": 0.20, "trail_act": 0.14, "trail_buf": 0.07},
+    "TORNTPOWER": {"exchange": "NSE", "name": "Torrent Power", "tp": 0.29, "sl": 0.19, "trail_act": 0.12, "trail_buf": 0.08},
+    "PIDILITIND": {"exchange": "NSE", "name": "Pidilite", "tp": 0.28, "sl": 0.17, "trail_act": 0.13, "trail_buf": 0.07},
+    "NATCOPHARM": {"exchange": "NSE", "name": "Natco Pharma", "tp": 0.27, "sl": 0.17, "trail_act": 0.15, "trail_buf": 0.09},
+    "TVSMOTOR": {"exchange": "NSE", "name": "TVS Motors", "tp": 0.28, "sl": 0.14, "trail_act": 0.14, "trail_buf": 0.08},
     "BEL": {"exchange": "NSE", "name": "Bharat Electronics", "tp": 0.33, "sl": 0.14, "trail_act": 0.33, "trail_buf": 0.00},
     "GODREJCP": {"exchange": "NSE", "name": "Godrej Consumer Products", "tp": 0.25, "sl": 0.13, "trail_act": 0.25, "trail_buf": 0.00},
     "SCHNEIDER": {"exchange": "NSE", "name": "Schneider Electric Infrastructure", "tp": 0.25, "sl": 0.22, "trail_act": 0.16, "trail_buf": 0.04},
@@ -46,6 +100,14 @@ STOCKS = {
     "MAXHEALTH": {"exchange": "NSE", "name": "Max Healthcare", "tp": 0.25, "sl": 0.21, "trail_act": 0.10, "trail_buf": 0.04},
     "LT": {"exchange": "NSE", "name": "Larsen & Toubro", "tp": 0.24, "sl": 0.19, "trail_act": 0.10, "trail_buf": 0.04},
     "HAL": {"exchange": "NSE", "name": "Hindustan Aeronautics", "tp": 0.27, "sl": 0.17, "trail_act": 0.08, "trail_buf": 0.05},
+    "HDFCBANK": {"exchange": "NSE", "name": "HDFC Bank", "tp": 0.27, "sl": 0.23, "trail_act": 0.15, "trail_buf": 0.08},
+    "ICICIBANK": {"exchange": "NSE", "name": "ICICI Bank", "tp": 0.29, "sl": 0.20, "trail_act": 0.14, "trail_buf": 0.08},
+    "DIXON": {"exchange": "NSE", "name": "Dixon Tech", "tp": 0.26, "sl": 0.19, "trail_act": 0.14, "trail_buf": 0.07},
+    "BAJAJ_AUTO": {"exchange": "NSE", "name": "Bajaj Auto", "tp": 0.26, "sl": 0.19, "trail_act": 0.14, "trail_buf": 0.07},
+    "M&M": {"exchange": "NSE", "name": "M&M", "tp": 0.24, "sl": 0.15, "trail_act": 0.15, "trail_buf": 0.10},
+    "ONGC": {"exchange": "NSE", "name": "ONGC", "tp": 0.24, "sl": 0.13, "trail_act": 0.09, "trail_buf": 0.02},
+    "SBIN": {"exchange": "NSE", "name": "SBI", "tp": 0.26, "sl": 0.16, "trail_act": 0.14, "trail_buf": 0.02},
+    "DIVISLAB": {"exchange": "NSE", "name": "Divi's Lab", "tp": 0.29, "sl": 0.16, "trail_act": 0.15, "trail_buf": 0.11},
 }
 
 # Initialize TradingView Datafeed
@@ -63,14 +125,30 @@ def save_state(state):
         json.dump(state, f, indent=4)
 
 def load_seen_news():
+    seen_links = set()
+    seen_titles = set()
     if os.path.exists(SEEN_NEWS_FILE):
-        with open(SEEN_NEWS_FILE, "r") as f:
-            return set(json.load(f))
-    return set()
+        try:
+            with open(SEEN_NEWS_FILE, "r") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    seen_links = set(data.get("links", []))
+                    seen_titles = set(data.get("titles", []))
+                elif isinstance(data, list):
+                    seen_links = set(data)
+        except Exception as e:
+            print(f"Error loading seen_news: {e}")
+    return seen_links, seen_titles
 
-def save_seen_news(seen_news):
-    with open(SEEN_NEWS_FILE, "w") as f:
-        json.dump(list(seen_news), f)
+def save_seen_news(seen_links, seen_titles):
+    try:
+        with open(SEEN_NEWS_FILE, "w") as f:
+            json.dump({
+                "links": list(seen_links),
+                "titles": list(seen_titles)
+            }, f, indent=4)
+    except Exception as e:
+        print(f"Error saving seen_news: {e}")
 
 def send_telegram_message(message):
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
@@ -90,8 +168,37 @@ def send_telegram_message(message):
     except Exception as e:
         print(f"Error sending telegram message: {e}")
 
-def get_news(stock_name):
+def get_news(stock_name, ticker=None):
     """Fetch top 2 recent news articles for the stock (for trade alerts)"""
+    if not ticker:
+        for tk, cfg in STOCKS.items():
+            if cfg['name'] == stock_name:
+                ticker = tk
+                break
+    if ticker:
+        try:
+            t = yf.Ticker(f"{ticker}.NS")
+            news = t.news
+            news_items = []
+            for article in news[:2]:
+                content = article.get('content', {})
+                title = content.get('title')
+                summary = content.get('summary') or content.get('description') or ""
+                link = content.get('clickThroughUrl', {}).get('url') or content.get('canonicalUrl', {}).get('url') or ""
+                
+                sentiment = analyze_sentiment(title, summary)
+                emoji = "🟢" if sentiment == "positive" else "🔴" if sentiment == "negative" else "🟡"
+                
+                summary_clean = re.sub('<[^<]+?>', '', summary).strip()
+                summary_short = summary_clean[:180] + "..." if len(summary_clean) > 180 else summary_clean
+                
+                item = f"{emoji} <b>{title}</b>\n<i>{summary_short}</i>\n<a href='{link}'>🔗 Read Link</a>"
+                news_items.append(item)
+            if news_items:
+                return "\n\n".join(news_items)
+        except Exception as e:
+            print(f"Error fetching yfinance news in get_news for {ticker}: {e}")
+            
     query = stock_name.replace(' ', '+') + "+stock+news+india"
     url = f"https://news.google.com/rss/search?q={query}&hl=en-IN&gl=IN&ceid=IN:en"
     try:
@@ -107,24 +214,53 @@ def get_news(stock_name):
 
 def check_news_stream():
     """Continuously checks for breaking news across all sources and alerts via Telegram"""
-    print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Checking for breaking news...")
-    seen_news = load_seen_news()
+    print(f"\n[{datetime.now(IST).strftime('%Y-%m-%d %H:%M:%S')}] Checking for breaking news...")
+    seen_links, seen_titles = load_seen_news()
     new_articles = False
     
     for ticker, config in STOCKS.items():
-        query = config['name'].replace(' ', '+') + "+stock+news+india"
-        url = f"https://news.google.com/rss/search?q={query}&hl=en-IN&gl=IN&ceid=IN:en"
         try:
-            feed = feedparser.parse(url)
-            # Check top 3 articles
-            for entry in feed.entries[:3]:
-                if entry.link not in seen_news:
-                    seen_news.add(entry.link)
+            t = yf.Ticker(f"{ticker}.NS")
+            news = t.news
+            if not news:
+                continue
+                
+            for article in news[:3]:
+                content = article.get('content', {})
+                link = content.get('clickThroughUrl', {}).get('url') or content.get('canonicalUrl', {}).get('url') or ""
+                title = content.get('title')
+                pub_date_str = content.get('pubDate')
+                
+                if not link or not title or not pub_date_str:
+                    continue
+                    
+                try:
+                    pub_time = datetime.strptime(pub_date_str, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+                except Exception as ex:
+                    print(f"Error parsing date {pub_date_str}: {ex}")
+                    continue
+                    
+                if pub_time <= STARTUP_TIME:
+                    continue
+                    
+                if link not in seen_links and not is_duplicate_title(title, seen_titles):
+                    seen_links.add(link)
+                    seen_titles.add(title)
                     new_articles = True
                     
+                    summary = content.get('summary') or content.get('description') or ""
+                    sentiment = analyze_sentiment(title, summary)
+                    color_emoji = "🟢" if sentiment == "positive" else "🔴" if sentiment == "negative" else "🟡"
+                    sentiment_label = "Positive" if sentiment == "positive" else "Negative" if sentiment == "negative" else "Neutral"
+                    
+                    summary_clean = re.sub('<[^<]+?>', '', summary).strip()
+                    summary_short = summary_clean[:200] + "..." if len(summary_clean) > 200 else summary_clean
+                    
                     msg = f"📰 <b>Breaking News: {config['name']}</b>\n\n"
-                    msg += f"<b>{entry.title}</b>\n\n"
-                    msg += f"<a href='{entry.link}'>🔗 Read Full Article</a>\n"
+                    msg += f"{color_emoji} <b>{title}</b>\n"
+                    msg += f"<i>{summary_short}</i>\n\n"
+                    msg += f"Sentiment: {color_emoji} {sentiment_label}\n"
+                    msg += f"<a href='{link}'>🔗 Read Full Article</a>\n"
                     
                     send_telegram_message(msg)
                     print(f"Sent News Alert for {ticker}")
@@ -132,7 +268,36 @@ def check_news_stream():
             print(f"Error fetching news for {ticker}: {e}")
             
     if new_articles:
-        save_seen_news(seen_news)
+        save_seen_news(seen_links, seen_titles)
+
+def send_pre_market_report():
+    print(f"\n[{datetime.now(IST).strftime('%Y-%m-%d %H:%M:%S')}] Fetching pre-market report...")
+    query = "nifty+pre-market+OR+gift+nifty+moneycontrol+OR+economic+times"
+    url = f"https://news.google.com/rss/search?q={query}&hl=en-IN&gl=IN&ceid=IN:en"
+    try:
+        feed = feedparser.parse(url)
+        if feed.entries:
+            best_entry = feed.entries[0]
+            for entry in feed.entries[:5]:
+                title_lower = entry.title.lower()
+                if any(w in title_lower for w in ["open", "start", "gift nifty", "nifty"]):
+                    best_entry = entry
+                    break
+            
+            title = best_entry.title
+            sentiment = analyze_sentiment(title, "")
+            color_emoji = "🟢" if sentiment == "positive" else "🔴" if sentiment == "negative" else "🟡"
+            
+            msg = f"🔔 <b>Pre-Market Report (IST {datetime.now(IST).strftime('%H:%M')})</b>\n\n"
+            msg += f"{color_emoji} {title}\n\n"
+            msg += f"<a href='{best_entry.link}'>🔗 Read details on Google News</a>"
+            
+            send_telegram_message(msg)
+            print("Sent pre-market report successfully.")
+        else:
+            print("No pre-market entries found.")
+    except Exception as e:
+        print(f"Error fetching pre-market report: {e}")
 
 def calculate_indicators(df):
     """Calculate MACD and SMA 50"""
@@ -217,7 +382,7 @@ def analyze_stocks():
                     msg += f"🚪 Entry Price: ₹{entry_price:.2f}\n"
                     msg += f"💵 Exit Price: ₹{current_close:.2f}\n"
                     msg += f"📊 Profit/Loss: <b>{profit_pct:.2f}%</b>\n\n"
-                    msg += f"📰 <b>Recent News:</b>\n{get_news(config['name'])}"
+                    msg += f"📰 <b>Recent News:</b>\n{get_news(config['name'], ticker)}"
                     
                     print(f"Sending SELL alert for {ticker} (Reason: {sell_reason})")
                     send_telegram_message(msg)
@@ -253,7 +418,7 @@ def analyze_stocks():
                     msg += f"🛡️ Stop Loss: ₹{current_close * (1 - config['sl']):.2f} (-{config['sl']*100}%)\n"
                     msg += f"📈 Trail Activation: +{config['trail_act']*100}%\n"
                     msg += f"⚙️ Strategy: AI Wealth Builder (Trend + Cooldown)\n\n"
-                    msg += f"📰 <b>Recent News:</b>\n{get_news(config['name'])}"
+                    msg += f"📰 <b>Recent News:</b>\n{get_news(config['name'], ticker)}"
                     
                     print(f"Sending BUY alert for {ticker}")
                     send_telegram_message(msg)
@@ -275,6 +440,9 @@ def run_scheduler():
     
     # Schedule breaking news check every 30 minutes
     schedule.every(30).minutes.do(check_news_stream)
+    
+    # Schedule pre-market report daily at 9:08 AM IST (Asia/Kolkata)
+    schedule.every().day.at("09:08", "Asia/Kolkata").do(send_pre_market_report)
     
     print("\nScheduler running. Press Ctrl+C to exit.\n")
     while True:
