@@ -108,6 +108,11 @@ STOCKS = {
     "ONGC": {"exchange": "NSE", "name": "ONGC", "tp": 0.24, "sl": 0.13, "trail_act": 0.09, "trail_buf": 0.02},
     "SBIN": {"exchange": "NSE", "name": "SBI", "tp": 0.26, "sl": 0.16, "trail_act": 0.14, "trail_buf": 0.02},
     "DIVISLAB": {"exchange": "NSE", "name": "Divi's Lab", "tp": 0.29, "sl": 0.16, "trail_act": 0.15, "trail_buf": 0.11},
+    "POLYCAB": {"exchange": "NSE", "name": "Polycab", "tp": 0.30, "sl": 0.19, "trail_act": 0.17, "trail_buf": 0.09},
+    "POWERGRID": {"exchange": "NSE", "name": "Power Grid", "tp": 0.24, "sl": 0.13, "trail_act": 0.14, "trail_buf": 0.08},
+    "WABAG": {"exchange": "NSE", "name": "VA Tech Wabag", "tp": 0.23, "sl": 0.14, "trail_act": 0.13, "trail_buf": 0.08},
+    "CDSL": {"exchange": "NSE", "name": "CDSL", "tp": 0.22, "sl": 0.18, "trail_act": 0.15, "trail_buf": 0.09},
+    "KAYNES": {"exchange": "NSE", "name": "Kaynes Technology", "tp": 0.23, "sl": 0.13, "trail_act": 0.15, "trail_buf": 0.10},
 }
 
 # Initialize TradingView Datafeed
