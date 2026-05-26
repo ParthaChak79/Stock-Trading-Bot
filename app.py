@@ -113,6 +113,7 @@ STOCKS = {
     "WABAG": {"exchange": "NSE", "name": "VA Tech Wabag", "tp": 0.23, "sl": 0.14, "trail_act": 0.13, "trail_buf": 0.08},
     "CDSL": {"exchange": "NSE", "name": "CDSL", "tp": 0.22, "sl": 0.18, "trail_act": 0.15, "trail_buf": 0.09},
     "KAYNES": {"exchange": "NSE", "name": "Kaynes Technology", "tp": 0.23, "sl": 0.13, "trail_act": 0.15, "trail_buf": 0.10},
+    "PIIND": {"exchange": "NSE", "name": "PI Industries", "tp": 0.20, "sl": 0.17, "trail_act": 0.16, "trail_buf": 0.08},
 }
 
 # Initialize TradingView Datafeed
