@@ -103,7 +103,7 @@ STOCKS = {
     "HDFCBANK": {"exchange": "NSE", "name": "HDFC Bank", "tp": 0.27, "sl": 0.23, "trail_act": 0.15, "trail_buf": 0.08},
     "ICICIBANK": {"exchange": "NSE", "name": "ICICI Bank", "tp": 0.29, "sl": 0.20, "trail_act": 0.14, "trail_buf": 0.08},
     "DIXON": {"exchange": "NSE", "name": "Dixon Tech", "tp": 0.26, "sl": 0.19, "trail_act": 0.14, "trail_buf": 0.07},
-    "BAJAJ_AUTO": {"exchange": "NSE", "name": "Bajaj Auto", "tp": 0.26, "sl": 0.19, "trail_act": 0.14, "trail_buf": 0.07},
+    "BAJAJ_AUTO": {"exchange": "NSE", "name": "Bajaj Auto", "tp": 0.26, "sl": 0.19, "trail_act": 0.14, "trail_buf": 0.07, "yf_ticker": "BAJAJ-AUTO.NS"},
     "M&M": {"exchange": "NSE", "name": "M&M", "tp": 0.24, "sl": 0.15, "trail_act": 0.15, "trail_buf": 0.10},
     "ONGC": {"exchange": "NSE", "name": "ONGC", "tp": 0.24, "sl": 0.13, "trail_act": 0.09, "trail_buf": 0.02},
     "SBIN": {"exchange": "NSE", "name": "SBI", "tp": 0.26, "sl": 0.16, "trail_act": 0.14, "trail_buf": 0.02},
@@ -114,6 +114,8 @@ STOCKS = {
     "CDSL": {"exchange": "NSE", "name": "CDSL", "tp": 0.22, "sl": 0.18, "trail_act": 0.15, "trail_buf": 0.09},
     "KAYNES": {"exchange": "NSE", "name": "Kaynes Technology", "tp": 0.23, "sl": 0.13, "trail_act": 0.15, "trail_buf": 0.10},
     "PIIND": {"exchange": "NSE", "name": "PI Industries", "tp": 0.20, "sl": 0.17, "trail_act": 0.16, "trail_buf": 0.08},
+    "ASTRAMICRO": {"exchange": "NSE", "name": "Astra Microwave Products", "tp": 0.26, "sl": 0.21, "trail_act": 0.12, "trail_buf": 0.08},
+    "NIFTY": {"exchange": "NSE", "name": "NIFTY50 Index", "tp": 0.25, "sl": 0.24, "trail_act": 0.13, "trail_buf": 0.07, "yf_ticker": "^NSEI"},
 }
 
 # Initialize TradingView Datafeed
@@ -183,7 +185,9 @@ def get_news(stock_name, ticker=None):
                 break
     if ticker:
         try:
-            t = yf.Ticker(f"{ticker}.NS")
+            cfg = STOCKS.get(ticker, {})
+            yf_ticker = cfg.get("yf_ticker", f"{ticker}.NS")
+            t = yf.Ticker(yf_ticker)
             news = t.news
             news_items = []
             for article in news[:2]:
@@ -226,7 +230,8 @@ def check_news_stream():
     
     for ticker, config in STOCKS.items():
         try:
-            t = yf.Ticker(f"{ticker}.NS")
+            yf_ticker = config.get("yf_ticker", f"{ticker}.NS")
+            t = yf.Ticker(yf_ticker)
             news = t.news
             if not news:
                 continue
@@ -321,6 +326,7 @@ def calculate_indicators(df):
     return df
 
 def analyze_stocks():
+    global tv
     print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Running TradingView market analysis...")
     state = load_state()
     
@@ -329,6 +335,11 @@ def analyze_stocks():
             # Fetch 200 bars of daily data from TradingView
             df = tv.get_hist(symbol=ticker, exchange=config['exchange'], interval=Interval.in_daily, n_bars=200)
             
+            if df is None or df.empty:
+                print(f"Warning: No data fetched for {ticker}. Re-initializing TradingView connection and retrying...")
+                tv = TvDatafeed()
+                df = tv.get_hist(symbol=ticker, exchange=config['exchange'], interval=Interval.in_daily, n_bars=200)
+                
             if df is None or df.empty:
                 print(f"No data fetched for {ticker}")
                 continue
