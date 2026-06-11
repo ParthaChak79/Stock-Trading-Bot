@@ -106,13 +106,13 @@ def simulate_strategy(df, tp, sl, trail_act, trail_buf):
     return trades
 
 def run_backtest(ticker, chat_id):
-    send_message(chat_id, f"🔍 Fetching historical data for {ticker} (2000 bars)...")
+    send_message(chat_id, f"🔍 Fetching historical data for {ticker} (max bars)...")
     global tv
-    df = tv.get_hist(symbol=ticker, exchange='NSE', interval=Interval.in_daily, n_bars=2000)
+    df = tv.get_hist(symbol=ticker, exchange='NSE', interval=Interval.in_daily, n_bars=10000)
     if df is None or df.empty:
         # Retry once
         tv = TvDatafeed()
-        df = tv.get_hist(symbol=ticker, exchange='NSE', interval=Interval.in_daily, n_bars=2000)
+        df = tv.get_hist(symbol=ticker, exchange='NSE', interval=Interval.in_daily, n_bars=10000)
         
     if df is None or df.empty:
         send_message(chat_id, f"❌ Failed to fetch TradingView data for {ticker}. Check symbol name.")
