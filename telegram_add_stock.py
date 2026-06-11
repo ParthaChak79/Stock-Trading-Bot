@@ -58,6 +58,7 @@ def simulate_strategy(df, tp, sl, trail_act, trail_buf):
     hist = df['MACD_Hist'].values
     close = df['close'].values
     high = df['high'].values
+    low = df['low'].values
     sma = df['SMA_50'].values
     
     for i in range(len(df)):
@@ -66,21 +67,29 @@ def simulate_strategy(df, tp, sl, trail_act, trail_buf):
             
         current_close = close[i]
         current_high = high[i]
+        current_low = low[i]
         
         if in_trade:
+            # First check if stop loss is hit (conservative exit)
+            if current_low <= stop_price:
+                profit = (stop_price - entry_price) / entry_price
+                trades.append(profit)
+                in_trade = False
+                continue
+                
+            # Next check if target is hit
+            if current_high >= target_price:
+                profit = (target_price - entry_price) / entry_price
+                trades.append(profit)
+                in_trade = False
+                continue
+
+            # Update trailing stop if we survived the day
             if current_high > highest_price:
                 highest_price = current_high
             
             if highest_price >= activation_price:
                 stop_price = trailing_stop_price
-            else:
-                stop_price = stop_loss_price
-                
-            # Exit check
-            if current_close >= target_price or current_close <= stop_price:
-                profit = (current_close - entry_price) / entry_price
-                trades.append(profit)
-                in_trade = False
         else:
             # Entry check
             if (HIST_MIN < hist[i] <= HIST_MAX) and (current_close > sma[i] * (1 + SMA_PCT)):
@@ -92,6 +101,7 @@ def simulate_strategy(df, tp, sl, trail_act, trail_buf):
                 activation_price = entry_price * (1 + trail_act)
                 stop_loss_price = entry_price * (1 - sl)
                 trailing_stop_price = entry_price * (1 + trail_buf)
+                stop_price = stop_loss_price
                 
     return trades
 

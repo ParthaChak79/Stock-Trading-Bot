@@ -84,16 +84,52 @@ SMA_LEN = 50
 SMA_PCT = 0.02 # Minimum 2% above 50 SMA
 
 # Stocks Configuration (TradingView Symbols & Exchanges)
+STOCKS = {
+    "BRITANNIA": {"exchange": "NSE", "name": "Britannia", "tp": 0.25, "sl": 0.20, "trail_act": 0.17, "trail_buf": 0.08},
+    "EPL": {"exchange": "NSE", "name": "EPL", "tp": 0.27, "sl": 0.18, "trail_act": 0.15, "trail_buf": 0.09},
+    "APOLLOHOSP": {"exchange": "NSE", "name": "Apollo Hospitals", "tp": 0.27, "sl": 0.18, "trail_act": 0.15, "trail_buf": 0.09},
+    "BHARTIARTL": {"exchange": "NSE", "name": "Bharti Airtel", "tp": 0.30, "sl": 0.20, "trail_act": 0.14, "trail_buf": 0.07},
+    "TORNTPOWER": {"exchange": "NSE", "name": "Torrent Power", "tp": 0.29, "sl": 0.19, "trail_act": 0.12, "trail_buf": 0.08},
+    "PIDILITIND": {"exchange": "NSE", "name": "Pidilite", "tp": 0.28, "sl": 0.17, "trail_act": 0.13, "trail_buf": 0.07},
+    "NATCOPHARM": {"exchange": "NSE", "name": "Natco Pharma", "tp": 0.27, "sl": 0.17, "trail_act": 0.15, "trail_buf": 0.09},
+    "TVSMOTOR": {"exchange": "NSE", "name": "TVS Motors", "tp": 0.28, "sl": 0.14, "trail_act": 0.14, "trail_buf": 0.08},
+    "BEL": {"exchange": "NSE", "name": "Bharat Electronics", "tp": 0.33, "sl": 0.14, "trail_act": 0.33, "trail_buf": 0.00},
+    "GODREJCP": {"exchange": "NSE", "name": "Godrej Consumer Products", "tp": 0.25, "sl": 0.13, "trail_act": 0.25, "trail_buf": 0.00},
+    "SCHNEIDER": {"exchange": "NSE", "name": "Schneider Electric Infrastructure", "tp": 0.25, "sl": 0.22, "trail_act": 0.16, "trail_buf": 0.04},
+    "FORTIS": {"exchange": "NSE", "name": "Fortis Healthcare", "tp": 0.25, "sl": 0.24, "trail_act": 0.13, "trail_buf": 0.07},
+    "MAXHEALTH": {"exchange": "NSE", "name": "Max Healthcare", "tp": 0.25, "sl": 0.21, "trail_act": 0.10, "trail_buf": 0.04},
+    "LT": {"exchange": "NSE", "name": "Larsen & Toubro", "tp": 0.24, "sl": 0.19, "trail_act": 0.10, "trail_buf": 0.04},
+    "HAL": {"exchange": "NSE", "name": "Hindustan Aeronautics", "tp": 0.27, "sl": 0.17, "trail_act": 0.08, "trail_buf": 0.05},
+    "HDFCBANK": {"exchange": "NSE", "name": "HDFC Bank", "tp": 0.27, "sl": 0.23, "trail_act": 0.15, "trail_buf": 0.08},
+    "ICICIBANK": {"exchange": "NSE", "name": "ICICI Bank", "tp": 0.29, "sl": 0.20, "trail_act": 0.14, "trail_buf": 0.08},
+    "DIXON": {"exchange": "NSE", "name": "Dixon Tech", "tp": 0.26, "sl": 0.19, "trail_act": 0.14, "trail_buf": 0.07},
+    "BAJAJ_AUTO": {"exchange": "NSE", "name": "Bajaj Auto", "tp": 0.26, "sl": 0.19, "trail_act": 0.14, "trail_buf": 0.07, "yf_ticker": "BAJAJ-AUTO.NS"},
+    "M&M": {"exchange": "NSE", "name": "M&M", "tp": 0.24, "sl": 0.15, "trail_act": 0.15, "trail_buf": 0.10},
+    "ONGC": {"exchange": "NSE", "name": "ONGC", "tp": 0.24, "sl": 0.13, "trail_act": 0.09, "trail_buf": 0.02},
+    "SBIN": {"exchange": "NSE", "name": "SBI", "tp": 0.26, "sl": 0.16, "trail_act": 0.14, "trail_buf": 0.02},
+    "DIVISLAB": {"exchange": "NSE", "name": "Divi's Lab", "tp": 0.29, "sl": 0.16, "trail_act": 0.15, "trail_buf": 0.11},
+    "POLYCAB": {"exchange": "NSE", "name": "Polycab", "tp": 0.30, "sl": 0.19, "trail_act": 0.17, "trail_buf": 0.09},
+    "POWERGRID": {"exchange": "NSE", "name": "Power Grid", "tp": 0.24, "sl": 0.13, "trail_act": 0.14, "trail_buf": 0.08},
+    "WABAG": {"exchange": "NSE", "name": "VA Tech Wabag", "tp": 0.23, "sl": 0.14, "trail_act": 0.13, "trail_buf": 0.08},
+    "CDSL": {"exchange": "NSE", "name": "CDSL", "tp": 0.22, "sl": 0.18, "trail_act": 0.15, "trail_buf": 0.09},
+    "KAYNES": {"exchange": "NSE", "name": "Kaynes Technology", "tp": 0.23, "sl": 0.13, "trail_act": 0.15, "trail_buf": 0.10},
+    "PIIND": {"exchange": "NSE", "name": "PI Industries", "tp": 0.20, "sl": 0.17, "trail_act": 0.16, "trail_buf": 0.08},
+    "ASTRAMICRO": {"exchange": "NSE", "name": "Astra Microwave Products", "tp": 0.26, "sl": 0.21, "trail_act": 0.12, "trail_buf": 0.08},
+    "NIFTY": {"exchange": "NSE", "name": "NIFTY50 Index", "tp": 0.25, "sl": 0.24, "trail_act": 0.13, "trail_buf": 0.07, "yf_ticker": "^NSEI"},
+}
+
 STOCKS_FILE = os.path.join(BASE_DIR, "stocks_config.json")
 
 def load_stocks():
+    merged_stocks = STOCKS.copy()
     if os.path.exists(STOCKS_FILE):
         try:
             with open(STOCKS_FILE, "r") as f:
-                return json.load(f)
+                dynamic_stocks = json.load(f)
+                merged_stocks.update(dynamic_stocks)
         except Exception as e:
             print(f"Error loading stocks: {e}")
-    return {}
+    return merged_stocks
 
 STOCKS = load_stocks()
 
