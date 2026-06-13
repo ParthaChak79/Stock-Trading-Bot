@@ -118,21 +118,6 @@ STOCKS = {
     "NIFTY": {"exchange": "NSE", "name": "NIFTY50 Index", "tp": 0.25, "sl": 0.24, "trail_act": 0.13, "trail_buf": 0.07, "yf_ticker": "^NSEI"},
 }
 
-STOCKS_FILE = os.path.join(BASE_DIR, "stocks_config.json")
-
-def load_stocks():
-    merged_stocks = STOCKS.copy()
-    if os.path.exists(STOCKS_FILE):
-        try:
-            with open(STOCKS_FILE, "r") as f:
-                dynamic_stocks = json.load(f)
-                merged_stocks.update(dynamic_stocks)
-        except Exception as e:
-            print(f"Error loading stocks: {e}")
-    return merged_stocks
-
-STOCKS = load_stocks()
-
 # Initialize TradingView Datafeed
 print("Initializing TradingView Connection...")
 tv = TvDatafeed()
@@ -192,8 +177,6 @@ def send_telegram_message(message):
         print(f"Error sending telegram message: {e}")
 
 def get_news(stock_name, ticker=None):
-    global STOCKS
-    STOCKS = load_stocks()
     """Fetch top 2 recent news articles for the stock (for trade alerts)"""
     if not ticker:
         for tk, cfg in STOCKS.items():
@@ -240,8 +223,6 @@ def get_news(stock_name, ticker=None):
         return f"Could not fetch news: {e}"
 
 def check_news_stream():
-    global STOCKS
-    STOCKS = load_stocks()
     """Continuously checks for breaking news across all sources and alerts via Telegram"""
     print(f"\n[{datetime.now(IST).strftime('%Y-%m-%d %H:%M:%S')}] Checking for breaking news...")
     seen_links, seen_titles = load_seen_news()
@@ -345,8 +326,7 @@ def calculate_indicators(df):
     return df
 
 def analyze_stocks():
-    global tv, STOCKS
-    STOCKS = load_stocks()
+    global tv
     print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Running TradingView market analysis...")
     state = load_state()
     

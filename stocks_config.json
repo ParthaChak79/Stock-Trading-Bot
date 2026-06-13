@@ -248,5 +248,14 @@
         "trail_act": 0.13,
         "trail_buf": 0.07,
         "yf_ticker": "^NSEI"
+    },
+    "KEI": {
+        "exchange": "NSE",
+        "name": "KEI",
+        "tp": 0.26,
+        "sl": 0.20,
+        "trail_act": 0.15,
+        "trail_buf": 0.05,
+        "yf_ticker": "KEI.NS"
     }
 }
