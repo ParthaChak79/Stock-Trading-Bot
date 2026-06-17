@@ -480,6 +480,7 @@ def analyze_stocks():
 
 def run_scheduler():
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Telegram Trading Bot Started!")
+    send_telegram_message("🚀 <b>Trading Bot:</b> Ready to go!")
     
     # Run once immediately on startup
     analyze_stocks()
