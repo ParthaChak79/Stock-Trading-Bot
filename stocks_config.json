@@ -257,5 +257,14 @@
         "trail_act": 0.15,
         "trail_buf": 0.05,
         "yf_ticker": "KEI.NS"
+    },
+    "NAVINFLUOR": {
+        "exchange": "NSE",
+        "name": "Navin Fluorine International Limited",
+        "tp": 0.19,
+        "sl": 0.185,
+        "trail_act": 0.10,
+        "trail_buf": 0.07,
+        "yf_ticker": "NAVINFLUOR.NS"
     }
 }

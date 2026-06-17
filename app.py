@@ -11,6 +11,7 @@ import yfinance as yf
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 from tvDatafeed import TvDatafeed, Interval
+from twilio.rest import Client
 
 # Setup base directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -22,6 +23,10 @@ ENV_FILE = os.path.join(BASE_DIR, ".env")
 load_dotenv(ENV_FILE)
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
+TWILIO_FROM_WHATSAPP = os.getenv("TWILIO_FROM_WHATSAPP")
+TWILIO_TO_WHATSAPP = os.getenv("TWILIO_TO_WHATSAPP")
 
 # Global Timezones & Startup time
 IST = timezone(timedelta(hours=5, minutes=30))
@@ -116,6 +121,8 @@ STOCKS = {
     "PIIND": {"exchange": "NSE", "name": "PI Industries", "tp": 0.20, "sl": 0.17, "trail_act": 0.16, "trail_buf": 0.08},
     "ASTRAMICRO": {"exchange": "NSE", "name": "Astra Microwave Products", "tp": 0.26, "sl": 0.21, "trail_act": 0.12, "trail_buf": 0.08},
     "NIFTY": {"exchange": "NSE", "name": "NIFTY50 Index", "tp": 0.25, "sl": 0.24, "trail_act": 0.13, "trail_buf": 0.07, "yf_ticker": "^NSEI"},
+    "KEI": {"exchange": "NSE", "name": "KEI", "tp": 0.26, "sl": 0.20, "trail_act": 0.15, "trail_buf": 0.05, "yf_ticker": "KEI.NS"},
+    "NAVINFLUOR": {"exchange": "NSE", "name": "Navin Fluorine International Limited", "tp": 0.19, "sl": 0.185, "trail_act": 0.10, "trail_buf": 0.07, "yf_ticker": "NAVINFLUOR.NS"},
 }
 
 # Initialize TradingView Datafeed
@@ -158,7 +165,33 @@ def save_seen_news(seen_links, seen_titles):
     except Exception as e:
         print(f"Error saving seen_news: {e}")
 
+def send_whatsapp_message(message):
+    if not TWILIO_ACCOUNT_SID or not TWILIO_AUTH_TOKEN:
+        print("\n--- Twilio credentials missing! ---")
+        return
+    
+    # Strip HTML tags since WhatsApp doesn't support <a> or <b> tags directly.
+    # WhatsApp uses *text* for bold and _text_ for italics.
+    clean_message = message.replace("<b>", "*").replace("</b>", "*")
+    clean_message = clean_message.replace("<i>", "_").replace("</i>", "_")
+    clean_message = re.sub(r'<a href=\'(.*?)\'>(.*?)</a>', r'\2: \1', clean_message)
+    clean_message = re.sub(r'<[^<]+?>', '', clean_message) # strip any remaining html
+
+    try:
+        client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+        client.messages.create(
+            body=clean_message,
+            from_=TWILIO_FROM_WHATSAPP,
+            to=TWILIO_TO_WHATSAPP
+        )
+        print("WhatsApp message sent successfully.")
+    except Exception as e:
+        print(f"Error sending WhatsApp message: {e}")
+
 def send_telegram_message(message):
+    # Send to WhatsApp as well (if configured)
+    send_whatsapp_message(message)
+
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
         print("\n--- Telegram credentials missing! Please configure .env file ---")
         return
