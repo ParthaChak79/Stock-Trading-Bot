@@ -25,6 +25,8 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
+TWILIO_API_KEY = os.getenv("TWILIO_API_KEY")
+TWILIO_API_SECRET = os.getenv("TWILIO_API_SECRET")
 TWILIO_FROM_WHATSAPP = os.getenv("TWILIO_FROM_WHATSAPP")
 TWILIO_TO_WHATSAPP = os.getenv("TWILIO_TO_WHATSAPP")
 
@@ -166,8 +168,12 @@ def save_seen_news(seen_links, seen_titles):
         print(f"Error saving seen_news: {e}")
 
 def send_whatsapp_message(message):
-    if not TWILIO_ACCOUNT_SID or not TWILIO_AUTH_TOKEN:
-        print("\n--- Twilio credentials missing! ---")
+    if not TWILIO_ACCOUNT_SID:
+        print("\n--- Twilio Account SID missing! ---")
+        return
+        
+    if not (TWILIO_AUTH_TOKEN or (TWILIO_API_KEY and TWILIO_API_SECRET)):
+        print("\n--- Twilio credentials missing! Provide Auth Token or API Key/Secret. ---")
         return
     
     # Strip HTML tags since WhatsApp doesn't support <a> or <b> tags directly.
@@ -178,7 +184,11 @@ def send_whatsapp_message(message):
     clean_message = re.sub(r'<[^<]+?>', '', clean_message) # strip any remaining html
 
     try:
-        client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+        if TWILIO_API_KEY and TWILIO_API_SECRET:
+            client = Client(TWILIO_API_KEY, TWILIO_API_SECRET, TWILIO_ACCOUNT_SID)
+        else:
+            client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+            
         client.messages.create(
             body=clean_message,
             from_=TWILIO_FROM_WHATSAPP,
