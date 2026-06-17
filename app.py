@@ -172,7 +172,9 @@ def send_whatsapp_message(message):
         print("\n--- Twilio Account SID missing! ---")
         return
         
-    if not (TWILIO_AUTH_TOKEN or (TWILIO_API_KEY and TWILIO_API_SECRET)):
+    has_api_key = TWILIO_API_KEY and TWILIO_API_SECRET and "your_twilio" not in TWILIO_API_KEY and "your_twilio" not in TWILIO_API_SECRET
+    
+    if not (TWILIO_AUTH_TOKEN or has_api_key):
         print("\n--- Twilio credentials missing! Provide Auth Token or API Key/Secret. ---")
         return
     
@@ -184,7 +186,7 @@ def send_whatsapp_message(message):
     clean_message = re.sub(r'<[^<]+?>', '', clean_message) # strip any remaining html
 
     try:
-        if TWILIO_API_KEY and TWILIO_API_SECRET:
+        if has_api_key:
             client = Client(TWILIO_API_KEY, TWILIO_API_SECRET, TWILIO_ACCOUNT_SID)
         else:
             client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
