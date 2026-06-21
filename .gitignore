@@ -5,3 +5,4 @@ seen_news.json
 __pycache__/
 *.pyc
 .DS_Store
+optimization_results.csv
