@@ -284,5 +284,14 @@
         "trail_act": 0.09,
         "trail_buf": 0.10,
         "yf_ticker": "AJANTPHARM.NS"
+    },
+    "LUPIN": {
+        "exchange": "NSE",
+        "name": "Lupin Ltd",
+        "tp": 0.15,
+        "sl": 0.30,
+        "trail_act": 0.12,
+        "trail_buf": 0.09,
+        "yf_ticker": "LUPIN.NS"
     }
 }

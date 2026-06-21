@@ -127,6 +127,7 @@ STOCKS = {
     "NAVINFLUOR": {"exchange": "NSE", "name": "Navin Fluorine International Limited", "tp": 0.19, "sl": 0.185, "trail_act": 0.10, "trail_buf": 0.07, "yf_ticker": "NAVINFLUOR.NS"},
     "ZYDUSLIFE": {"exchange": "NSE", "name": "Zydus Lifesciences Limited", "tp": 0.23, "sl": 0.11, "trail_act": 0.18, "trail_buf": 0.08, "yf_ticker": "ZYDUSLIFE.NS"},
     "AJANTPHARM": {"exchange": "NSE", "name": "Ajanta Pharma", "tp": 0.21, "sl": 0.24, "trail_act": 0.09, "trail_buf": 0.10, "yf_ticker": "AJANTPHARM.NS"},
+    "LUPIN": {"exchange": "NSE", "name": "Lupin Ltd", "tp": 0.15, "sl": 0.30, "trail_act": 0.12, "trail_buf": 0.09, "yf_ticker": "LUPIN.NS"},
 }
 
 # Initialize TradingView Datafeed
