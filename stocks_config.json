@@ -251,7 +251,7 @@
     },
     "KEI": {
         "exchange": "NSE",
-        "name": "KEI",
+        "name": "KEI Industries Limited",
         "tp": 0.26,
         "sl": 0.20,
         "trail_act": 0.15,
@@ -266,5 +266,23 @@
         "trail_act": 0.10,
         "trail_buf": 0.07,
         "yf_ticker": "NAVINFLUOR.NS"
+    },
+    "ZYDUSLIFE": {
+        "exchange": "NSE",
+        "name": "Zydus Lifesciences Limited",
+        "tp": 0.23,
+        "sl": 0.11,
+        "trail_act": 0.18,
+        "trail_buf": 0.08,
+        "yf_ticker": "ZYDUSLIFE.NS"
+    },
+    "AJANTPHARM": {
+        "exchange": "NSE",
+        "name": "Ajanta Pharma",
+        "tp": 0.21,
+        "sl": 0.24,
+        "trail_act": 0.09,
+        "trail_buf": 0.10,
+        "yf_ticker": "AJANTPHARM.NS"
     }
 }
