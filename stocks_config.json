@@ -293,5 +293,32 @@
         "trail_act": 0.12,
         "trail_buf": 0.09,
         "yf_ticker": "LUPIN.NS"
+    },
+    "RRKABEL": {
+        "exchange": "NSE",
+        "name": "RR Kabel Ltd",
+        "tp": 0.13,
+        "sl": 0.23,
+        "trail_act": 0.08,
+        "trail_buf": 0.09,
+        "yf_ticker": "RRKABEL.NS"
+    },
+    "PRICOLLTD": {
+        "exchange": "NSE",
+        "name": "Pricol Ltd",
+        "tp": 0.13,
+        "sl": 0.17,
+        "trail_act": 0.10,
+        "trail_buf": 0.05,
+        "yf_ticker": "PRICOLLTD.NS"
+    },
+    "THYROCARE": {
+        "exchange": "NSE",
+        "name": "Thyrocare",
+        "tp": 0.15,
+        "sl": 0.18,
+        "trail_act": 0.08,
+        "trail_buf": 0.03,
+        "yf_ticker": "THYROCARE.NS"
     }
 }

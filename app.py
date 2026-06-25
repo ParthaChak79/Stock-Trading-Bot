@@ -122,12 +122,15 @@ STOCKS = {
     "KAYNES": {"exchange": "NSE", "name": "Kaynes Technology", "tp": 0.23, "sl": 0.13, "trail_act": 0.15, "trail_buf": 0.10},
     "PIIND": {"exchange": "NSE", "name": "PI Industries", "tp": 0.20, "sl": 0.17, "trail_act": 0.16, "trail_buf": 0.08},
     "ASTRAMICRO": {"exchange": "NSE", "name": "Astra Microwave Products", "tp": 0.26, "sl": 0.21, "trail_act": 0.12, "trail_buf": 0.08},
-    "NIFTY": {"exchange": "NSE", "name": "NIFTY50 Index", "tp": 0.25, "sl": 0.24, "trail_act": 0.13, "trail_buf": 0.07, "yf_ticker": "^NSEI"},
+    "NIFTY": {"exchange": "NSE", "name": "NIFTY50 Index", "tp": 0.27, "sl": 0.24, "trail_act": 0.13, "trail_buf": 0.04, "yf_ticker": "^NSEI"},
     "KEI": {"exchange": "NSE", "name": "KEI Industries Limited", "tp": 0.26, "sl": 0.20, "trail_act": 0.15, "trail_buf": 0.05, "yf_ticker": "KEI.NS"},
     "NAVINFLUOR": {"exchange": "NSE", "name": "Navin Fluorine International Limited", "tp": 0.19, "sl": 0.185, "trail_act": 0.10, "trail_buf": 0.07, "yf_ticker": "NAVINFLUOR.NS"},
     "ZYDUSLIFE": {"exchange": "NSE", "name": "Zydus Lifesciences Limited", "tp": 0.23, "sl": 0.11, "trail_act": 0.18, "trail_buf": 0.08, "yf_ticker": "ZYDUSLIFE.NS"},
     "AJANTPHARM": {"exchange": "NSE", "name": "Ajanta Pharma", "tp": 0.21, "sl": 0.24, "trail_act": 0.09, "trail_buf": 0.10, "yf_ticker": "AJANTPHARM.NS"},
     "LUPIN": {"exchange": "NSE", "name": "Lupin Ltd", "tp": 0.15, "sl": 0.30, "trail_act": 0.12, "trail_buf": 0.09, "yf_ticker": "LUPIN.NS"},
+    "RRKABEL": {"exchange": "NSE", "name": "RR Kabel Ltd", "tp": 0.13, "sl": 0.23, "trail_act": 0.08, "trail_buf": 0.09, "yf_ticker": "RRKABEL.NS"},
+    "PRICOLLTD": {"exchange": "NSE", "name": "Pricol Ltd", "tp": 0.13, "sl": 0.17, "trail_act": 0.10, "trail_buf": 0.05, "yf_ticker": "PRICOLLTD.NS"},
+    "THYROCARE": {"exchange": "NSE", "name": "Thyrocare", "tp": 0.15, "sl": 0.18, "trail_act": 0.08, "trail_buf": 0.03, "yf_ticker": "THYROCARE.NS"},
 }
 
 # Initialize TradingView Datafeed
@@ -223,6 +226,112 @@ def send_telegram_message(message):
         response.raise_for_status()
     except Exception as e:
         print(f"Error sending telegram message: {e}")
+
+REMINDERS_FILE = os.path.join(BASE_DIR, "signal_reminders.json")
+
+def load_reminders():
+    if os.path.exists(REMINDERS_FILE):
+        try:
+            with open(REMINDERS_FILE, "r") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Error loading reminders: {e}")
+    return []
+
+def save_reminders(reminders):
+    try:
+        with open(REMINDERS_FILE, "w") as f:
+            json.dump(reminders, f, indent=4)
+    except Exception as e:
+        print(f"Error saving reminders: {e}")
+
+def add_reminder(ticker, signal_type, message):
+    reminders = load_reminders()
+    today_str = datetime.now(IST).strftime("%Y-%m-%d")
+    reminders.append({
+        "ticker": ticker,
+        "type": signal_type,
+        "message": message,
+        "date_triggered": today_str,
+        "reminder_sent": False
+    })
+    save_reminders(reminders)
+
+def check_and_send_reminders():
+    print(f"\n[{datetime.now(IST).strftime('%Y-%m-%d %H:%M:%S')}] Checking for yesterday's signal reminders...")
+    reminders = load_reminders()
+    today = datetime.now(IST).date()
+    updated = False
+    
+    for r in reminders:
+        if not r.get("reminder_sent", False):
+            try:
+                triggered_date = datetime.strptime(r["date_triggered"], "%Y-%m-%d").date()
+                if today > triggered_date:
+                    orig_msg = r["message"]
+                    # Prefix with a reminder label
+                    reminder_msg = f"🔔 <b>YESTERDAY'S SIGNAL REMINDER</b> 🔔\n\n{orig_msg}"
+                    send_telegram_message(reminder_msg)
+                    r["reminder_sent"] = True
+                    updated = True
+                    print(f"Sent reminder for {r['ticker']} {r['type']} signal from {r['date_triggered']}")
+            except Exception as e:
+                print(f"Error parsing triggered date for {r['ticker']}: {e}")
+                
+    if updated:
+        save_reminders(reminders)
+
+def send_holdings_report():
+    print(f"\n[{datetime.now(IST).strftime('%Y-%m-%d %H:%M:%S')}] Generating weekly holdings report...")
+    state = load_state()
+    if not state:
+        msg = "📊 <b>Weekly Holdings Report</b>\n\nNo active share holdings at the moment."
+        send_telegram_message(msg)
+        return
+        
+    msg_lines = ["📊 <b>Weekly Holdings Report (Friday Close)</b>\n"]
+    total_pnl_sum = 0
+    count = 0
+    
+    for ticker, data in state.items():
+        config = STOCKS.get(ticker)
+        if not config:
+            continue
+            
+        try:
+            # Fetch latest daily data to get current price
+            df = tv.get_hist(symbol=ticker, exchange=config['exchange'], interval=Interval.in_daily, n_bars=1)
+            if df is not None and not df.empty:
+                current_price = df.iloc[-1]['close']
+            else:
+                current_price = data['entry_price'] # fallback
+        except Exception as e:
+            print(f"Error fetching price for report for {ticker}: {e}")
+            current_price = data['entry_price']
+            
+        entry_price = data['entry_price']
+        pnl_pct = ((current_price - entry_price) / entry_price) * 100
+        total_pnl_sum += pnl_pct
+        count += 1
+        
+        pnl_emoji = "🟢" if pnl_pct >= 0 else "🔴"
+        pnl_sign = "+" if pnl_pct >= 0 else ""
+        
+        msg_lines.append(
+            f"• <b>{config['name']} ({ticker})</b>\n"
+            f"  📅 Entry Date: {data['date']}\n"
+            f"  🚪 Entry Price: ₹{entry_price:.2f}\n"
+            f"  💵 Current Price: ₹{current_price:.2f}\n"
+            f"  📊 P&L: {pnl_emoji} <b>{pnl_sign}{pnl_pct:.2f}%</b>\n"
+        )
+        
+    if count > 0:
+        avg_pnl = total_pnl_sum / count
+        avg_sign = "+" if avg_pnl >= 0 else ""
+        avg_emoji = "🟢" if avg_pnl >= 0 else "🔴"
+        msg_lines.append(f"\n📈 <b>Average P&L:</b> {avg_emoji} <b>{avg_sign}{avg_pnl:.2f}%</b>")
+        
+    send_telegram_message("\n".join(msg_lines))
 
 def get_news(stock_name, ticker=None):
     """Fetch top 2 recent news articles for the stock (for trade alerts)"""
@@ -451,6 +560,7 @@ def analyze_stocks():
                     
                     print(f"Sending SELL alert for {ticker} (Reason: {sell_reason})")
                     send_telegram_message(msg)
+                    add_reminder(ticker, "SELL", msg)
                     
                     # Remove from active trades
                     del state[ticker]
@@ -487,6 +597,7 @@ def analyze_stocks():
                     
                     print(f"Sending BUY alert for {ticker}")
                     send_telegram_message(msg)
+                    add_reminder(ticker, "BUY", msg)
                 else:
                     print(f"{ticker} [WAIT] - Cooldown: {is_cooled_off} ({hist_line:.2f}), Trend Intact: {is_trend_intact}")
                     
@@ -500,6 +611,7 @@ def run_scheduler():
     # Run once immediately on startup
     analyze_stocks()
     check_news_stream()
+    check_and_send_reminders()
     
     # Schedule trading check every hour
     schedule.every(1).hours.do(analyze_stocks)
@@ -509,6 +621,12 @@ def run_scheduler():
     
     # Schedule pre-market report daily at 9:08 AM IST (Asia/Kolkata)
     schedule.every().day.at("09:08", "Asia/Kolkata").do(send_pre_market_report)
+    
+    # Schedule yesterday's reminders daily at 9:10 AM IST (Asia/Kolkata)
+    schedule.every().day.at("09:10", "Asia/Kolkata").do(check_and_send_reminders)
+    
+    # Schedule weekly holdings report every Friday at 4:00 PM IST (Asia/Kolkata)
+    schedule.every().friday.at("16:00", "Asia/Kolkata").do(send_holdings_report)
     
     print("\nScheduler running. Press Ctrl+C to exit.\n")
     while True:

@@ -6,3 +6,4 @@ __pycache__/
 *.pyc
 .DS_Store
 optimization_results.csv
+signal_reminders.json
