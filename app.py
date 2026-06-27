@@ -45,13 +45,15 @@ STARTUP_TIME = datetime.now(timezone.utc)
 POSITIVE_WORDS = {
     'profit', 'rise', 'rises', 'growth', 'grow', 'jump', 'jumps', 'surge', 'surges', 'gain', 'gains', 'upbeat', 'positive',
     'bullish', 'expansion', 'expand', 'highest', 'record', 'exceed', 'exceeds', 'beat', 'beats', 'soar', 'soars', 'win', 'wins',
-    'buy', 'strong', 'outperform', 'upgrade', 'upgraded', 'recovery', 'recover', 'demand', 'revenue increase', 'acquisition'
+    'buy', 'strong', 'outperform', 'upgrade', 'upgraded', 'recovery', 'recover', 'demand', 'revenue increase', 'acquisition',
+    'dividend', 'breakout', 'momentum', 'approval', 'contract', 'partnership', 'bonus', 'all-time high', 'bull'
 }
 NEGATIVE_WORDS = {
     'loss', 'fall', 'falls', 'drop', 'drops', 'decline', 'declines', 'dip', 'dips', 'plunge', 'plunges', 'slump', 'slumps',
     'negative', 'bearish', 'weak', 'weakness', 'down', 'cut', 'cuts', 'shrink', 'shrinks', 'hit', 'hits', 'deficit',
     'fail', 'fails', 'miss', 'misses', 'debt', 'risk', 'risks', 'warn', 'warns', 'warning', 'sell', 'underperform',
-    'downgrade', 'downgraded', 'disruption', 'disruptions', 'pressure', 'pressures', 'slid', 'slide', 'slides'
+    'downgrade', 'downgraded', 'disruption', 'disruptions', 'pressure', 'pressures', 'slid', 'slide', 'slides',
+    'lawsuit', 'resignation', 'fraud', 'probe', 'inflation', 'recession', 'bear', 'default', 'penalty'
 }
 
 def clean_title(title):
@@ -78,9 +80,13 @@ def is_duplicate_title(new_title, seen_titles, threshold=0.6):
     return False
 
 def analyze_sentiment(title, summary):
-    text = f"{title} {summary or ''}".lower()
-    pos_count = sum(1 for word in POSITIVE_WORDS if word in text)
-    neg_count = sum(1 for word in NEGATIVE_WORDS if word in text)
+    title_text = title.lower()
+    summary_text = (summary or '').lower()
+    
+    # Weight title 2x
+    pos_count = sum(2 if word in title_text else 1 for word in POSITIVE_WORDS if word in title_text or word in summary_text)
+    neg_count = sum(2 if word in title_text else 1 for word in NEGATIVE_WORDS if word in title_text or word in summary_text)
+    
     if pos_count > neg_count:
         return "positive"
     elif neg_count > pos_count:
@@ -418,7 +424,7 @@ def send_holdings_report():
         send_telegram_message(msg)
         return
         
-    msg_lines = ["📊 <b>Weekly Portfolio Report (Friday Close)</b>\n"]
+    msg_lines = ["━━━━━━━━━━━━━━━━━━━━━━\n📊 <b>Weekly Portfolio Report</b>\n━━━━━━━━━━━━━━━━━━━━━━\n"]
     
     # 1. Active Holdings
     msg_lines.append("🟩 <b>Active Holdings</b>")
@@ -466,14 +472,25 @@ def send_holdings_report():
             msg_lines.append(f"📈 <b>Average Active P&L:</b> {avg_emoji} <b>{avg_sign}{avg_pnl:.2f}%</b>\n")
             
     # 2. Exited Holdings
-    msg_lines.append("🟥 <b>Exited Holdings (Sold since May 2026)</b>")
+    msg_lines.append("━━━━━━━━━━━━━━━━━━━━━━\n🟥 <b>Recent Exits (Last 3 Months)</b>\n━━━━━━━━━━━━━━━━━━━━━━")
     
     # Filter out active tickers from exited list just in case
     active_tickers = set(state.keys())
-    exited_to_show = [t for t in closed_trades if t['ticker'] not in active_tickers]
+    today_date = datetime.now(IST).date()
+    
+    exited_to_show = []
+    for t in closed_trades:
+        if t['ticker'] not in active_tickers:
+            try:
+                exit_date_obj = datetime.strptime(t['exit_date'], "%d %b %Y").date()
+                if (today_date - exit_date_obj).days <= 90:
+                    exited_to_show.append(t)
+            except Exception:
+                # If date parsing fails, include it just in case
+                exited_to_show.append(t)
     
     if not exited_to_show:
-        msg_lines.append("<i>No exited holdings to show.</i>")
+        msg_lines.append("\n<i>No exited holdings to show.</i>")
     else:
         for t in exited_to_show:
             pnl_pct = t.get('pnl_pct', 0)
@@ -484,10 +501,10 @@ def send_holdings_report():
             reason_clean = re.sub('<[^<]+?>', '', t.get('reason', ''))
             
             msg_lines.append(
-                f"• <b>{t.get('name', t['ticker'])} ({t['ticker']})</b>\n"
+                f"\n• <b>{t.get('name', t['ticker'])} ({t['ticker']})</b>\n"
                 f"  📅 Held: {t.get('entry_date', 'N/A')} to {t.get('exit_date', 'N/A')}\n"
                 f"  🚪 Entry: ₹{t.get('entry_price', 0):.2f} | Exit: ₹{t.get('exit_price', 0):.2f}\n"
-                f"  📊 Realized P&L: {pnl_emoji} <b>{pnl_sign}{pnl_pct:.2f}%</b> ({reason_clean})\n"
+                f"  📊 Realized P&L: {pnl_emoji} <b>{pnl_sign}{pnl_pct:.2f}%</b> ({reason_clean})"
             )
             
     send_telegram_message("\n".join(msg_lines))
@@ -713,14 +730,14 @@ def analyze_stocks():
                     sell_reason = f"🎯 <b>TAKE PROFIT</b> Hit at ₹{current_close:.2f}"
                 elif current_close <= stop_price:
                     if highest_price >= activation_price:
-                        sell_reason = f"🛡️ <b>TRAILING STOP</b> Hit at ₹{current_close:.2f} (Locked in +{config['trail_buf']*100}% Buffer)"
+                        sell_reason = f"🛡️ <b>TRAILING STOP</b> Hit at ₹{current_close:.2f} (Locked in +{config['trail_buf']*100:.2f}% Buffer)"
                     else:
-                        sell_reason = f"🛑 <b>STOP LOSS</b> Hit at ₹{current_close:.2f} (-{config['sl']*100}%)"
+                        sell_reason = f"🛑 <b>STOP LOSS</b> Hit at ₹{current_close:.2f} (-{config['sl']*100:.2f}%)"
                         
                 if sell_reason:
                     profit_pct = ((current_close - entry_price) / entry_price) * 100
                     
-                    msg = f"📉 <b>SELL ALERT: {config['name']}</b>\n"
+                    msg = f"━━━━━━━━━━━━━━━━━━━━━━\n📉 <b>SELL ALERT: {config['name']}</b>\n━━━━━━━━━━━━━━━━━━━━━━\n"
                     msg += f"🗓️ Date: {date_str}\n"
                     msg += f"💡 Reason: {sell_reason}\n\n"
                     msg += f"🚪 Entry Price: ₹{entry_price:.2f}\n"
@@ -728,8 +745,9 @@ def analyze_stocks():
                     msg += f"📊 Profit/Loss: <b>{profit_pct:.2f}%</b>\n\n"
                     prob = config.get('probability')
                     if prob is not None:
-                        msg += f"🎲 Setup Probability: {prob * 100:.0f}%\n"
-                    msg += f"📰 <b>Recent News:</b>\n{get_news(config['name'], ticker)}"
+                        msg += f"🎲 Setup Probability: {prob * 100:.2f}%\n"
+                    msg += f"\n📰 <b>Recent News:</b>\n{get_news(config['name'], ticker)}\n"
+                    msg += f"\n#{ticker} #NSE"
                     
                     print(f"Sending SELL alert for {ticker} (Reason: {sell_reason})")
                     send_telegram_message(msg)
@@ -771,17 +789,18 @@ def analyze_stocks():
                     }
                     save_state(state)
                     
-                    msg = f"🚀 <b>BUY ALERT: {config['name']}</b>\n"
+                    msg = f"━━━━━━━━━━━━━━━━━━━━━━\n🚀 <b>BUY ALERT: {config['name']}</b>\n━━━━━━━━━━━━━━━━━━━━━━\n"
                     msg += f"🗓️ Date: {date_str}\n\n"
                     msg += f"🟢 Entry Price: ₹{current_close:.2f}\n"
-                    msg += f"🎯 Target Price: ₹{current_close * (1 + config['tp']):.2f} (+{config['tp']*100}%)\n"
-                    msg += f"🛡️ Stop Loss: ₹{current_close * (1 - config['sl']):.2f} (-{config['sl']*100}%)\n"
-                    msg += f"📈 Trail Activation: +{config['trail_act']*100}%\n"
+                    msg += f"🎯 Target Price: ₹{current_close * (1 + config['tp']):.2f} (+{config['tp']*100:.2f}%)\n"
+                    msg += f"🛡️ Stop Loss: ₹{current_close * (1 - config['sl']):.2f} (-{config['sl']*100:.2f}%)\n"
+                    msg += f"📈 Trigger Price: +{config['trail_act']*100:.2f}%\n"
+                    msg += f"🛡️ Trailing Stop-loss (Buffer): {config['trail_buf']*100:.2f}%\n"
                     prob = config.get('probability')
                     if prob is not None:
-                        msg += f"🎲 Setup Probability: {prob * 100:.0f}%\n"
-                    msg += f"⚙️ Strategy: AI Wealth Builder (Trend + Cooldown)\n\n"
-                    msg += f"📰 <b>Recent News:</b>\n{get_news(config['name'], ticker)}"
+                        msg += f"🎲 Setup Probability: {prob * 100:.2f}%\n"
+                    msg += f"\n📰 <b>Recent News:</b>\n{get_news(config['name'], ticker)}\n"
+                    msg += f"\n#{ticker} #NSE"
                     
                     print(f"Sending BUY alert for {ticker}")
                     send_telegram_message(msg)
