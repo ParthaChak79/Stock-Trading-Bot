@@ -7,3 +7,4 @@ __pycache__/
 .DS_Store
 optimization_results.csv
 signal_reminders.json
+closed_trades.json

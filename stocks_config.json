@@ -5,79 +5,89 @@
         "tp": 0.25,
         "sl": 0.2,
         "trail_act": 0.17,
-        "trail_buf": 0.08
+        "trail_buf": 0.08,
+        "probability": 0.77
     },
     "EPL": {
         "exchange": "NSE",
         "name": "EPL",
         "tp": 0.27,
-        "sl": 0.18,
-        "trail_act": 0.15,
-        "trail_buf": 0.09
+        "sl": 0.26,
+        "trail_act": 0.18,
+        "trail_buf": 0.09,
+        "probability": 0.84
     },
     "APOLLOHOSP": {
         "exchange": "NSE",
         "name": "Apollo Hospitals",
         "tp": 0.27,
-        "sl": 0.18,
+        "sl": 0.23,
         "trail_act": 0.15,
-        "trail_buf": 0.09
+        "trail_buf": 0.09,
+        "probability": 0.80
     },
     "BHARTIARTL": {
         "exchange": "NSE",
         "name": "Bharti Airtel",
         "tp": 0.3,
-        "sl": 0.2,
+        "sl": 0.23,
         "trail_act": 0.14,
-        "trail_buf": 0.07
+        "trail_buf": 0.07,
+        "probability": 0.82
     },
     "TORNTPOWER": {
         "exchange": "NSE",
         "name": "Torrent Power",
         "tp": 0.29,
-        "sl": 0.19,
+        "sl": 0.23,
         "trail_act": 0.12,
-        "trail_buf": 0.08
+        "trail_buf": 0.08,
+        "probability": 0.81
     },
     "PIDILITIND": {
         "exchange": "NSE",
         "name": "Pidilite",
         "tp": 0.28,
-        "sl": 0.17,
+        "sl": 0.23,
         "trail_act": 0.13,
-        "trail_buf": 0.07
+        "trail_buf": 0.07,
+        "probability": 0.87
     },
     "NATCOPHARM": {
         "exchange": "NSE",
         "name": "Natco Pharma",
         "tp": 0.27,
-        "sl": 0.17,
-        "trail_act": 0.15,
-        "trail_buf": 0.09
+        "sl": 0.23,
+        "trail_act": 0.13,
+        "trail_buf": 0.09,
+        "probability": 0.70
     },
     "TVSMOTOR": {
         "exchange": "NSE",
         "name": "TVS Motors",
         "tp": 0.28,
-        "sl": 0.14,
+        "sl": 0.24,
         "trail_act": 0.14,
-        "trail_buf": 0.08
+        "trail_buf": 0.08,
+        "probability": 0.75
     },
     "BEL": {
         "exchange": "NSE",
         "name": "Bharat Electronics",
         "tp": 0.33,
-        "sl": 0.14,
-        "trail_act": 0.33,
-        "trail_buf": 0.0
+        "sl": 0.24,
+        "trail_act": 0.17,
+        "trail_buf": 0.07,
+        "probability": 0.67
     },
     "GODREJCP": {
         "exchange": "NSE",
         "name": "Godrej Consumer Products",
-        "tp": 0.25,
-        "sl": 0.13,
-        "trail_act": 0.25,
-        "trail_buf": 0.0
+        "tp": 0.29,
+        "sl": 0.24,
+        "trail_act": 0.17,
+        "trail_buf": 0.09,
+        "probability": 0.82
     },
     "SCHNEIDER": {
         "exchange": "NSE",
@@ -85,7 +95,8 @@
         "tp": 0.25,
         "sl": 0.22,
         "trail_act": 0.16,
-        "trail_buf": 0.04
+        "trail_buf": 0.05,
+        "probability": 0.72
     },
     "FORTIS": {
         "exchange": "NSE",
@@ -93,7 +104,8 @@
         "tp": 0.25,
         "sl": 0.24,
         "trail_act": 0.13,
-        "trail_buf": 0.07
+        "trail_buf": 0.07,
+        "probability": 0.79
     },
     "MAXHEALTH": {
         "exchange": "NSE",
@@ -101,7 +113,8 @@
         "tp": 0.25,
         "sl": 0.21,
         "trail_act": 0.1,
-        "trail_buf": 0.04
+        "trail_buf": 0.04,
+        "probability": 1
     },
     "LT": {
         "exchange": "NSE",
@@ -109,7 +122,8 @@
         "tp": 0.24,
         "sl": 0.19,
         "trail_act": 0.1,
-        "trail_buf": 0.04
+        "trail_buf": 0.04,
+        "probability": 0.81
     },
     "HAL": {
         "exchange": "NSE",
@@ -117,7 +131,8 @@
         "tp": 0.27,
         "sl": 0.17,
         "trail_act": 0.08,
-        "trail_buf": 0.05
+        "trail_buf": 0.05,
+        "probability": 0.80
     },
     "HDFCBANK": {
         "exchange": "NSE",
@@ -125,23 +140,26 @@
         "tp": 0.27,
         "sl": 0.23,
         "trail_act": 0.15,
-        "trail_buf": 0.08
+        "trail_buf": 0.08,
+        "probability": 0.80
     },
     "ICICIBANK": {
         "exchange": "NSE",
         "name": "ICICI Bank",
-        "tp": 0.29,
-        "sl": 0.2,
+        "tp": 0.30,
+        "sl": 0.25,
         "trail_act": 0.14,
-        "trail_buf": 0.08
+        "trail_buf": 0.08,
+        "probability": 0.83
     },
     "DIXON": {
         "exchange": "NSE",
         "name": "Dixon Tech",
-        "tp": 0.26,
+        "tp": 0.27,
         "sl": 0.19,
         "trail_act": 0.14,
-        "trail_buf": 0.07
+        "trail_buf": 0.08,
+        "probability": 0.78
     },
     "BAJAJ_AUTO": {
         "exchange": "NSE",
@@ -150,6 +168,7 @@
         "sl": 0.19,
         "trail_act": 0.14,
         "trail_buf": 0.07,
+        "probability": 0.83,
         "yf_ticker": "BAJAJ-AUTO.NS"
     },
     "M&M": {
@@ -158,23 +177,26 @@
         "tp": 0.24,
         "sl": 0.15,
         "trail_act": 0.15,
-        "trail_buf": 0.1
+        "trail_buf": 0.1,
+        "probability": 0.75
     },
     "ONGC": {
         "exchange": "NSE",
         "name": "ONGC",
-        "tp": 0.24,
-        "sl": 0.13,
+        "tp": 0.25,
+        "sl": 0.23,
         "trail_act": 0.09,
-        "trail_buf": 0.02
+        "trail_buf": 0.05,
+        "probability": 0.82
     },
     "SBIN": {
         "exchange": "NSE",
         "name": "SBI",
         "tp": 0.26,
-        "sl": 0.16,
+        "sl": 0.23,
         "trail_act": 0.14,
-        "trail_buf": 0.02
+        "trail_buf": 0.06,
+        "probability": 0.75
     },
     "DIVISLAB": {
         "exchange": "NSE",
@@ -182,7 +204,8 @@
         "tp": 0.29,
         "sl": 0.16,
         "trail_act": 0.15,
-        "trail_buf": 0.11
+        "trail_buf": 0.11,
+        "probability": 0.75
     },
     "POLYCAB": {
         "exchange": "NSE",
@@ -190,23 +213,26 @@
         "tp": 0.3,
         "sl": 0.19,
         "trail_act": 0.17,
-        "trail_buf": 0.09
+        "trail_buf": 0.09,
+        "probability": 0.89
     },
     "POWERGRID": {
         "exchange": "NSE",
         "name": "Power Grid",
-        "tp": 0.24,
-        "sl": 0.13,
+        "tp": 0.25,
+        "sl": 0.17,
         "trail_act": 0.14,
-        "trail_buf": 0.08
+        "trail_buf": 0.08,
+        "probability": 0.71
     },
     "WABAG": {
         "exchange": "NSE",
         "name": "VA Tech Wabag",
-        "tp": 0.23,
-        "sl": 0.14,
-        "trail_act": 0.13,
-        "trail_buf": 0.08
+        "tp": 0.26,
+        "sl": 0.16,
+        "trail_act": 0.12,
+        "trail_buf": 0.08,
+        "probability": 0.72
     },
     "CDSL": {
         "exchange": "NSE",
@@ -214,7 +240,8 @@
         "tp": 0.22,
         "sl": 0.18,
         "trail_act": 0.15,
-        "trail_buf": 0.09
+        "trail_buf": 0.09,
+        "probability": 0.78
     },
     "KAYNES": {
         "exchange": "NSE",
@@ -222,7 +249,8 @@
         "tp": 0.23,
         "sl": 0.13,
         "trail_act": 0.15,
-        "trail_buf": 0.1
+        "trail_buf": 0.1,
+        "probability": 0.82
     },
     "PIIND": {
         "exchange": "NSE",
@@ -230,15 +258,17 @@
         "tp": 0.2,
         "sl": 0.17,
         "trail_act": 0.16,
-        "trail_buf": 0.08
+        "trail_buf": 0.08,
+        "probability": 0.8
     },
     "ASTRAMICRO": {
         "exchange": "NSE",
         "name": "Astra Microwave Products",
-        "tp": 0.26,
-        "sl": 0.21,
+        "tp": 0.29,
+        "sl": 0.25,
         "trail_act": 0.12,
-        "trail_buf": 0.08
+        "trail_buf": 0.08,
+        "probability": 0.72
     },
     "NIFTY": {
         "exchange": "NSE",
@@ -247,6 +277,7 @@
         "sl": 0.24,
         "trail_act": 0.13,
         "trail_buf": 0.07,
+        "probability": 0.79,
         "yf_ticker": "^NSEI"
     },
     "KEI": {
@@ -256,6 +287,7 @@
         "sl": 0.20,
         "trail_act": 0.15,
         "trail_buf": 0.05,
+        "probability": 0.80,
         "yf_ticker": "KEI.NS"
     },
     "NAVINFLUOR": {
@@ -265,15 +297,17 @@
         "sl": 0.185,
         "trail_act": 0.10,
         "trail_buf": 0.07,
+        "probability": 0.86,
         "yf_ticker": "NAVINFLUOR.NS"
     },
     "ZYDUSLIFE": {
         "exchange": "NSE",
         "name": "Zydus Lifesciences Limited",
-        "tp": 0.23,
-        "sl": 0.11,
-        "trail_act": 0.18,
-        "trail_buf": 0.08,
+        "tp": 0.18,
+        "sl": 0.19,
+        "trail_act": 0.08,
+        "trail_buf": 0.06,
+        "probability": 0.82,
         "yf_ticker": "ZYDUSLIFE.NS"
     },
     "AJANTPHARM": {
@@ -282,7 +316,8 @@
         "tp": 0.21,
         "sl": 0.24,
         "trail_act": 0.09,
-        "trail_buf": 0.10,
+        "trail_buf": 0.08,
+        "probability": 0.77,
         "yf_ticker": "AJANTPHARM.NS"
     },
     "LUPIN": {
@@ -291,25 +326,28 @@
         "tp": 0.15,
         "sl": 0.30,
         "trail_act": 0.12,
-        "trail_buf": 0.09,
+        "trail_buf": 0.11,
+        "probability": 0.87,
         "yf_ticker": "LUPIN.NS"
     },
     "RRKABEL": {
         "exchange": "NSE",
         "name": "RR Kabel Ltd",
-        "tp": 0.13,
-        "sl": 0.23,
+        "tp": 0.10,
+        "sl": 0.08,
         "trail_act": 0.08,
-        "trail_buf": 0.09,
+        "trail_buf": 0.06,
+        "probability": 0.80,
         "yf_ticker": "RRKABEL.NS"
     },
     "PRICOLLTD": {
         "exchange": "NSE",
         "name": "Pricol Ltd",
-        "tp": 0.13,
+        "tp": 0.12,
         "sl": 0.17,
         "trail_act": 0.10,
         "trail_buf": 0.05,
+        "probability": 0.73,
         "yf_ticker": "PRICOLLTD.NS"
     },
     "THYROCARE": {
@@ -319,6 +357,7 @@
         "sl": 0.18,
         "trail_act": 0.08,
         "trail_buf": 0.03,
+        "probability": 0.81,
         "yf_ticker": "THYROCARE.NS"
     }
 }

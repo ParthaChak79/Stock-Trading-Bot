@@ -19,16 +19,23 @@ STATE_FILE = os.path.join(BASE_DIR, "portfolio_state.json")
 SEEN_NEWS_FILE = os.path.join(BASE_DIR, "seen_news.json")
 ENV_FILE = os.path.join(BASE_DIR, ".env")
 
+def clean_env_var(value):
+    if not value:
+        return value
+    # Split by '#' to remove inline comments
+    value = value.split('#')[0]
+    return value.strip()
+
 # Load env variables
 load_dotenv(ENV_FILE)
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
-TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
-TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
-TWILIO_API_KEY = os.getenv("TWILIO_API_KEY")
-TWILIO_API_SECRET = os.getenv("TWILIO_API_SECRET")
-TWILIO_FROM_WHATSAPP = os.getenv("TWILIO_FROM_WHATSAPP")
-TWILIO_TO_WHATSAPP = os.getenv("TWILIO_TO_WHATSAPP")
+TELEGRAM_BOT_TOKEN = clean_env_var(os.getenv("TELEGRAM_BOT_TOKEN"))
+TELEGRAM_CHAT_ID = clean_env_var(os.getenv("TELEGRAM_CHAT_ID"))
+TWILIO_ACCOUNT_SID = clean_env_var(os.getenv("TWILIO_ACCOUNT_SID"))
+TWILIO_AUTH_TOKEN = clean_env_var(os.getenv("TWILIO_AUTH_TOKEN"))
+TWILIO_API_KEY = clean_env_var(os.getenv("TWILIO_API_KEY"))
+TWILIO_API_SECRET = clean_env_var(os.getenv("TWILIO_API_SECRET"))
+TWILIO_FROM_WHATSAPP = clean_env_var(os.getenv("TWILIO_FROM_WHATSAPP"))
+TWILIO_TO_WHATSAPP = clean_env_var(os.getenv("TWILIO_TO_WHATSAPP"))
 
 # Global Timezones & Startup time
 IST = timezone(timedelta(hours=5, minutes=30))
@@ -90,48 +97,93 @@ HIST_MAX = 2.0
 SMA_LEN = 50
 SMA_PCT = 0.02 # Minimum 2% above 50 SMA
 
-# Stocks Configuration (TradingView Symbols & Exchanges)
-STOCKS = {
-    "BRITANNIA": {"exchange": "NSE", "name": "Britannia", "tp": 0.25, "sl": 0.20, "trail_act": 0.17, "trail_buf": 0.08},
-    "EPL": {"exchange": "NSE", "name": "EPL", "tp": 0.27, "sl": 0.18, "trail_act": 0.15, "trail_buf": 0.09},
-    "APOLLOHOSP": {"exchange": "NSE", "name": "Apollo Hospitals", "tp": 0.27, "sl": 0.18, "trail_act": 0.15, "trail_buf": 0.09},
-    "BHARTIARTL": {"exchange": "NSE", "name": "Bharti Airtel", "tp": 0.30, "sl": 0.20, "trail_act": 0.14, "trail_buf": 0.07},
-    "TORNTPOWER": {"exchange": "NSE", "name": "Torrent Power", "tp": 0.29, "sl": 0.19, "trail_act": 0.12, "trail_buf": 0.08},
-    "PIDILITIND": {"exchange": "NSE", "name": "Pidilite", "tp": 0.28, "sl": 0.17, "trail_act": 0.13, "trail_buf": 0.07},
-    "NATCOPHARM": {"exchange": "NSE", "name": "Natco Pharma", "tp": 0.27, "sl": 0.17, "trail_act": 0.15, "trail_buf": 0.09},
-    "TVSMOTOR": {"exchange": "NSE", "name": "TVS Motors", "tp": 0.28, "sl": 0.14, "trail_act": 0.14, "trail_buf": 0.08},
-    "BEL": {"exchange": "NSE", "name": "Bharat Electronics", "tp": 0.33, "sl": 0.14, "trail_act": 0.33, "trail_buf": 0.00},
-    "GODREJCP": {"exchange": "NSE", "name": "Godrej Consumer Products", "tp": 0.25, "sl": 0.13, "trail_act": 0.25, "trail_buf": 0.00},
-    "SCHNEIDER": {"exchange": "NSE", "name": "Schneider Electric Infrastructure", "tp": 0.25, "sl": 0.22, "trail_act": 0.16, "trail_buf": 0.04},
-    "FORTIS": {"exchange": "NSE", "name": "Fortis Healthcare", "tp": 0.25, "sl": 0.24, "trail_act": 0.13, "trail_buf": 0.07},
-    "MAXHEALTH": {"exchange": "NSE", "name": "Max Healthcare", "tp": 0.25, "sl": 0.21, "trail_act": 0.10, "trail_buf": 0.04},
-    "LT": {"exchange": "NSE", "name": "Larsen & Toubro", "tp": 0.24, "sl": 0.19, "trail_act": 0.10, "trail_buf": 0.04},
-    "HAL": {"exchange": "NSE", "name": "Hindustan Aeronautics", "tp": 0.27, "sl": 0.17, "trail_act": 0.08, "trail_buf": 0.05},
-    "HDFCBANK": {"exchange": "NSE", "name": "HDFC Bank", "tp": 0.27, "sl": 0.23, "trail_act": 0.15, "trail_buf": 0.08},
-    "ICICIBANK": {"exchange": "NSE", "name": "ICICI Bank", "tp": 0.29, "sl": 0.20, "trail_act": 0.14, "trail_buf": 0.08},
-    "DIXON": {"exchange": "NSE", "name": "Dixon Tech", "tp": 0.26, "sl": 0.19, "trail_act": 0.14, "trail_buf": 0.07},
-    "BAJAJ_AUTO": {"exchange": "NSE", "name": "Bajaj Auto", "tp": 0.26, "sl": 0.19, "trail_act": 0.14, "trail_buf": 0.07, "yf_ticker": "BAJAJ-AUTO.NS"},
-    "M&M": {"exchange": "NSE", "name": "M&M", "tp": 0.24, "sl": 0.15, "trail_act": 0.15, "trail_buf": 0.10},
-    "ONGC": {"exchange": "NSE", "name": "ONGC", "tp": 0.24, "sl": 0.13, "trail_act": 0.09, "trail_buf": 0.02},
-    "SBIN": {"exchange": "NSE", "name": "SBI", "tp": 0.26, "sl": 0.16, "trail_act": 0.14, "trail_buf": 0.02},
-    "DIVISLAB": {"exchange": "NSE", "name": "Divi's Lab", "tp": 0.29, "sl": 0.16, "trail_act": 0.15, "trail_buf": 0.11},
-    "POLYCAB": {"exchange": "NSE", "name": "Polycab", "tp": 0.30, "sl": 0.19, "trail_act": 0.17, "trail_buf": 0.09},
-    "POWERGRID": {"exchange": "NSE", "name": "Power Grid", "tp": 0.24, "sl": 0.13, "trail_act": 0.14, "trail_buf": 0.08},
-    "WABAG": {"exchange": "NSE", "name": "VA Tech Wabag", "tp": 0.23, "sl": 0.14, "trail_act": 0.13, "trail_buf": 0.08},
-    "CDSL": {"exchange": "NSE", "name": "CDSL", "tp": 0.22, "sl": 0.18, "trail_act": 0.15, "trail_buf": 0.09},
-    "KAYNES": {"exchange": "NSE", "name": "Kaynes Technology", "tp": 0.23, "sl": 0.13, "trail_act": 0.15, "trail_buf": 0.10},
-    "PIIND": {"exchange": "NSE", "name": "PI Industries", "tp": 0.20, "sl": 0.17, "trail_act": 0.16, "trail_buf": 0.08},
-    "ASTRAMICRO": {"exchange": "NSE", "name": "Astra Microwave Products", "tp": 0.26, "sl": 0.21, "trail_act": 0.12, "trail_buf": 0.08},
-    "NIFTY": {"exchange": "NSE", "name": "NIFTY50 Index", "tp": 0.27, "sl": 0.24, "trail_act": 0.13, "trail_buf": 0.04, "yf_ticker": "^NSEI"},
-    "KEI": {"exchange": "NSE", "name": "KEI Industries Limited", "tp": 0.26, "sl": 0.20, "trail_act": 0.15, "trail_buf": 0.05, "yf_ticker": "KEI.NS"},
-    "NAVINFLUOR": {"exchange": "NSE", "name": "Navin Fluorine International Limited", "tp": 0.19, "sl": 0.185, "trail_act": 0.10, "trail_buf": 0.07, "yf_ticker": "NAVINFLUOR.NS"},
-    "ZYDUSLIFE": {"exchange": "NSE", "name": "Zydus Lifesciences Limited", "tp": 0.23, "sl": 0.11, "trail_act": 0.18, "trail_buf": 0.08, "yf_ticker": "ZYDUSLIFE.NS"},
-    "AJANTPHARM": {"exchange": "NSE", "name": "Ajanta Pharma", "tp": 0.21, "sl": 0.24, "trail_act": 0.09, "trail_buf": 0.10, "yf_ticker": "AJANTPHARM.NS"},
-    "LUPIN": {"exchange": "NSE", "name": "Lupin Ltd", "tp": 0.15, "sl": 0.30, "trail_act": 0.12, "trail_buf": 0.09, "yf_ticker": "LUPIN.NS"},
-    "RRKABEL": {"exchange": "NSE", "name": "RR Kabel Ltd", "tp": 0.13, "sl": 0.23, "trail_act": 0.08, "trail_buf": 0.09, "yf_ticker": "RRKABEL.NS"},
-    "PRICOLLTD": {"exchange": "NSE", "name": "Pricol Ltd", "tp": 0.13, "sl": 0.17, "trail_act": 0.10, "trail_buf": 0.05, "yf_ticker": "PRICOLLTD.NS"},
-    "THYROCARE": {"exchange": "NSE", "name": "Thyrocare", "tp": 0.15, "sl": 0.18, "trail_act": 0.08, "trail_buf": 0.03, "yf_ticker": "THYROCARE.NS"},
+# NSE Market Holidays Configuration for 2026
+NSE_HOLIDAYS = {
+    2026: {
+        "01-15", # Municipal Corporation Election - Maharashtra
+        "01-26", # Republic Day
+        "03-03", # Holi
+        "03-26", # Shri Ram Navami
+        "03-31", # Shri Mahavir Jayanti
+        "04-03", # Good Friday
+        "04-14", # Dr. Baba Saheb Ambedkar Jayanti
+        "05-01", # Maharashtra Day
+        "05-28", # Bakri Id
+        "06-26", # Muharram
+        "09-14", # Ganesh Chaturthi
+        "10-02", # Mahatma Gandhi Jayanti
+        "10-20", # Dussehra
+        "11-10", # Diwali-Balipratipada
+        "11-24", # Prakash Gurpurb Sri Guru Nanak Dev
+        "12-25"  # Christmas
+    }
 }
+
+def is_market_closed(date_obj):
+    # Saturday = 5, Sunday = 6
+    if date_obj.weekday() >= 5:
+        return True
+    year = date_obj.year
+    date_str = date_obj.strftime("%m-%d")
+    if year in NSE_HOLIDAYS:
+        if date_str in NSE_HOLIDAYS[year]:
+            return True
+    return False
+
+# Stocks Configuration (Loaded Dynamically from stocks_config.json)
+CONFIG_FILE = os.path.join(BASE_DIR, "stocks_config.json")
+
+def load_stocks_config():
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, "r") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Error loading stocks_config.json: {e}")
+    # Fallback to hardcoded dict if file doesn't exist
+    return {
+        "BRITANNIA": {"exchange": "NSE", "name": "Britannia", "tp": 0.25, "sl": 0.20, "trail_act": 0.17, "trail_buf": 0.08},
+        "EPL": {"exchange": "NSE", "name": "EPL", "tp": 0.27, "sl": 0.26, "trail_act": 0.18, "trail_buf": 0.09},
+        "APOLLOHOSP": {"exchange": "NSE", "name": "Apollo Hospitals", "tp": 0.27, "sl": 0.23, "trail_act": 0.15, "trail_buf": 0.09},
+        "BHARTIARTL": {"exchange": "NSE", "name": "Bharti Airtel", "tp": 0.30, "sl": 0.23, "trail_act": 0.14, "trail_buf": 0.07},
+        "TORNTPOWER": {"exchange": "NSE", "name": "Torrent Power", "tp": 0.29, "sl": 0.23, "trail_act": 0.12, "trail_buf": 0.08},
+        "PIDILITIND": {"exchange": "NSE", "name": "Pidilite", "tp": 0.28, "sl": 0.23, "trail_act": 0.13, "trail_buf": 0.07},
+        "NATCOPHARM": {"exchange": "NSE", "name": "Natco Pharma", "tp": 0.27, "sl": 0.23, "trail_act": 0.13, "trail_buf": 0.09},
+        "TVSMOTOR": {"exchange": "NSE", "name": "TVS Motors", "tp": 0.28, "sl": 0.24, "trail_act": 0.14, "trail_buf": 0.08},
+        "BEL": {"exchange": "NSE", "name": "Bharat Electronics", "tp": 0.33, "sl": 0.24, "trail_act": 0.17, "trail_buf": 0.07},
+        "GODREJCP": {"exchange": "NSE", "name": "Godrej Consumer Products", "tp": 0.29, "sl": 0.24, "trail_act": 0.17, "trail_buf": 0.09},
+        "SCHNEIDER": {"exchange": "NSE", "name": "Schneider Electric Infrastructure", "tp": 0.25, "sl": 0.22, "trail_act": 0.16, "trail_buf": 0.05},
+        "FORTIS": {"exchange": "NSE", "name": "Fortis Healthcare", "tp": 0.25, "sl": 0.24, "trail_act": 0.13, "trail_buf": 0.07},
+        "MAXHEALTH": {"exchange": "NSE", "name": "Max Healthcare", "tp": 0.25, "sl": 0.21, "trail_act": 0.10, "trail_buf": 0.04},
+        "LT": {"exchange": "NSE", "name": "Larsen & Toubro", "tp": 0.24, "sl": 0.19, "trail_act": 0.10, "trail_buf": 0.04},
+        "HAL": {"exchange": "NSE", "name": "Hindustan Aeronautics", "tp": 0.27, "sl": 0.17, "trail_act": 0.08, "trail_buf": 0.05},
+        "HDFCBANK": {"exchange": "NSE", "name": "HDFC Bank", "tp": 0.27, "sl": 0.23, "trail_act": 0.15, "trail_buf": 0.08},
+        "ICICIBANK": {"exchange": "NSE", "name": "ICICI Bank", "tp": 0.30, "sl": 0.25, "trail_act": 0.14, "trail_buf": 0.08},
+        "DIXON": {"exchange": "NSE", "name": "Dixon Tech", "tp": 0.27, "sl": 0.19, "trail_act": 0.14, "trail_buf": 0.08},
+        "BAJAJ_AUTO": {"exchange": "NSE", "name": "Bajaj Auto", "tp": 0.26, "sl": 0.19, "trail_act": 0.14, "trail_buf": 0.07, "yf_ticker": "BAJAJ-AUTO.NS"},
+        "M&M": {"exchange": "NSE", "name": "M&M", "tp": 0.24, "sl": 0.15, "trail_act": 0.15, "trail_buf": 0.10},
+        "ONGC": {"exchange": "NSE", "name": "ONGC", "tp": 0.25, "sl": 0.23, "trail_act": 0.09, "trail_buf": 0.05},
+        "SBIN": {"exchange": "NSE", "name": "SBI", "tp": 0.26, "sl": 0.23, "trail_act": 0.14, "trail_buf": 0.06},
+        "DIVISLAB": {"exchange": "NSE", "name": "Divi's Lab", "tp": 0.29, "sl": 0.16, "trail_act": 0.15, "trail_buf": 0.11},
+        "POLYCAB": {"exchange": "NSE", "name": "Polycab", "tp": 0.30, "sl": 0.19, "trail_act": 0.17, "trail_buf": 0.09},
+        "POWERGRID": {"exchange": "NSE", "name": "Power Grid", "tp": 0.25, "sl": 0.17, "trail_act": 0.14, "trail_buf": 0.08},
+        "WABAG": {"exchange": "NSE", "name": "VA Tech Wabag", "tp": 0.26, "sl": 0.16, "trail_act": 0.12, "trail_buf": 0.08},
+        "CDSL": {"exchange": "NSE", "name": "CDSL", "tp": 0.22, "sl": 0.18, "trail_act": 0.15, "trail_buf": 0.09},
+        "KAYNES": {"exchange": "NSE", "name": "Kaynes Technology", "tp": 0.23, "sl": 0.13, "trail_act": 0.15, "trail_buf": 0.10},
+        "PIIND": {"exchange": "NSE", "name": "PI Industries", "tp": 0.20, "sl": 0.17, "trail_act": 0.16, "trail_buf": 0.08},
+        "ASTRAMICRO": {"exchange": "NSE", "name": "Astra Microwave Products", "tp": 0.29, "sl": 0.25, "trail_act": 0.12, "trail_buf": 0.08},
+        "NIFTY": {"exchange": "NSE", "name": "NIFTY50 Index", "tp": 0.25, "sl": 0.24, "trail_act": 0.13, "trail_buf": 0.07, "yf_ticker": "^NSEI"},
+        "KEI": {"exchange": "NSE", "name": "KEI Industries Limited", "tp": 0.26, "sl": 0.20, "trail_act": 0.15, "trail_buf": 0.05, "yf_ticker": "KEI.NS"},
+        "NAVINFLUOR": {"exchange": "NSE", "name": "Navin Fluorine International Limited", "tp": 0.19, "sl": 0.185, "trail_act": 0.10, "trail_buf": 0.07, "yf_ticker": "NAVINFLUOR.NS"},
+        "ZYDUSLIFE": {"exchange": "NSE", "name": "Zydus Lifesciences Limited", "tp": 0.18, "sl": 0.19, "trail_act": 0.08, "trail_buf": 0.06, "yf_ticker": "ZYDUSLIFE.NS"},
+        "AJANTPHARM": {"exchange": "NSE", "name": "Ajanta Pharma", "tp": 0.21, "sl": 0.24, "trail_act": 0.09, "trail_buf": 0.10, "yf_ticker": "AJANTPHARM.NS"},
+        "LUPIN": {"exchange": "NSE", "name": "Lupin Ltd", "tp": 0.15, "sl": 0.30, "trail_act": 0.12, "trail_buf": 0.11, "yf_ticker": "LUPIN.NS"},
+        "RRKABEL": {"exchange": "NSE", "name": "RR Kabel Ltd", "tp": 0.10, "sl": 0.08, "trail_act": 0.08, "trail_buf": 0.06, "yf_ticker": "RRKABEL.NS"},
+        "PRICOLLTD": {"exchange": "NSE", "name": "Pricol Ltd", "tp": 0.13, "sl": 0.17, "trail_act": 0.10, "trail_buf": 0.05, "yf_ticker": "PRICOLLTD.NS"},
+        "THYROCARE": {"exchange": "NSE", "name": "Thyrocare", "tp": 0.15, "sl": 0.18, "trail_act": 0.08, "trail_buf": 0.03, "yf_ticker": "THYROCARE.NS"}
+    }
+
+STOCKS = load_stocks_config()
 
 # Initialize TradingView Datafeed
 print("Initializing TradingView Connection...")
@@ -173,15 +225,88 @@ def save_seen_news(seen_links, seen_titles):
     except Exception as e:
         print(f"Error saving seen_news: {e}")
 
+CLOSED_TRADES_FILE = os.path.join(BASE_DIR, "closed_trades.json")
+
+def load_closed_trades():
+    if not os.path.exists(CLOSED_TRADES_FILE):
+        # Seed with initial trades since May 2026 as requested
+        initial_trades = [
+            {
+                "ticker": "NATCOPHARM",
+                "name": "Natco Pharma",
+                "entry_price": 1165.60,
+                "exit_price": 1210.00,
+                "entry_date": "15 May 2026",
+                "exit_date": "22 May 2026",
+                "pnl_pct": 3.81,
+                "reason": "Trailing Stop Hit"
+            },
+            {
+                "ticker": "WABAG",
+                "name": "VA Tech Wabag",
+                "entry_price": 1452.80,
+                "exit_price": 1585.00,
+                "entry_date": "25 May 2026",
+                "exit_date": "18 Jun 2026",
+                "pnl_pct": 9.10,
+                "reason": "Take Profit Hit"
+            }
+        ]
+        try:
+            with open(CLOSED_TRADES_FILE, "w") as f:
+                json.dump(initial_trades, f, indent=4)
+            return initial_trades
+        except Exception as e:
+            print(f"Error seeding closed_trades.json: {e}")
+            return []
+            
+    try:
+        with open(CLOSED_TRADES_FILE, "r") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Error loading closed_trades.json: {e}")
+    return []
+
+def log_closed_trade(ticker, name, entry_price, exit_price, entry_date, exit_date, pnl_pct, reason):
+    trades = load_closed_trades()
+    # Check duplicate
+    for t in trades:
+        if t['ticker'] == ticker and t['exit_date'] == exit_date:
+            return
+            
+    trades.append({
+        "ticker": ticker,
+        "name": name,
+        "entry_price": float(entry_price),
+        "exit_price": float(exit_price),
+        "entry_date": entry_date,
+        "exit_date": exit_date,
+        "pnl_pct": float(pnl_pct),
+        "reason": str(reason)
+    })
+    try:
+        with open(CLOSED_TRADES_FILE, "w") as f:
+            json.dump(trades, f, indent=4)
+    except Exception as e:
+        print(f"Error saving closed_trades.json: {e}")
+
 def send_whatsapp_message(message):
     if not TWILIO_ACCOUNT_SID:
-        print("\n--- Twilio Account SID missing! ---")
+        print("\n[WhatsApp] Twilio Account SID missing! Skipping WhatsApp broadcast.")
+        return
+        
+    if not TWILIO_FROM_WHATSAPP or not TWILIO_TO_WHATSAPP:
+        print(f"\n[WhatsApp] Twilio WhatsApp numbers missing! FROM: {TWILIO_FROM_WHATSAPP}, TO: {TWILIO_TO_WHATSAPP}. Skipping WhatsApp broadcast.")
+        return
+        
+    if "your_twilio" in TWILIO_FROM_WHATSAPP or "your_twilio" in TWILIO_TO_WHATSAPP:
+        print("\n[WhatsApp] Twilio WhatsApp numbers contain default placeholders! Skipping WhatsApp broadcast.")
         return
         
     has_api_key = TWILIO_API_KEY and TWILIO_API_SECRET and "your_twilio" not in TWILIO_API_KEY and "your_twilio" not in TWILIO_API_SECRET
     
     if not (TWILIO_AUTH_TOKEN or has_api_key):
-        print("\n--- Twilio credentials missing! Provide Auth Token or API Key/Secret. ---")
+        print("\n[WhatsApp] Twilio credentials missing! Provide Auth Token or API Key/Secret. Skipping WhatsApp broadcast.")
         return
     
     # Strip HTML tags since WhatsApp doesn't support <a> or <b> tags directly.
@@ -197,14 +322,16 @@ def send_whatsapp_message(message):
         else:
             client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
             
+        print(f"[WhatsApp] Sending message to {TWILIO_TO_WHATSAPP} from {TWILIO_FROM_WHATSAPP}...")
         client.messages.create(
             body=clean_message,
             from_=TWILIO_FROM_WHATSAPP,
             to=TWILIO_TO_WHATSAPP
         )
-        print("WhatsApp message sent successfully.")
+        print("[WhatsApp] WhatsApp message sent successfully.")
     except Exception as e:
-        print(f"Error sending WhatsApp message: {e}")
+        print(f"[WhatsApp] Error sending WhatsApp message: {e}")
+        print("[WhatsApp] Note: If you are using Twilio Sandbox, remember that the session expires every 72 hours. You must send 'join <sandbox-keyword>' to your Twilio number from your phone to re-enable it.")
 
 def send_telegram_message(message):
     # Send to WhatsApp as well (if configured)
@@ -284,53 +411,85 @@ def check_and_send_reminders():
 def send_holdings_report():
     print(f"\n[{datetime.now(IST).strftime('%Y-%m-%d %H:%M:%S')}] Generating weekly holdings report...")
     state = load_state()
-    if not state:
-        msg = "📊 <b>Weekly Holdings Report</b>\n\nNo active share holdings at the moment."
+    closed_trades = load_closed_trades()
+    
+    if not state and not closed_trades:
+        msg = "📊 <b>Weekly Holdings Report</b>\n\nNo active or exited share holdings from May 2026 onwards."
         send_telegram_message(msg)
         return
         
-    msg_lines = ["📊 <b>Weekly Holdings Report (Friday Close)</b>\n"]
-    total_pnl_sum = 0
-    count = 0
+    msg_lines = ["📊 <b>Weekly Portfolio Report (Friday Close)</b>\n"]
     
-    for ticker, data in state.items():
-        config = STOCKS.get(ticker)
-        if not config:
-            continue
+    # 1. Active Holdings
+    msg_lines.append("🟩 <b>Active Holdings</b>")
+    if not state:
+        msg_lines.append("<i>No active holdings at the moment.</i>\n")
+    else:
+        total_active_pnl_sum = 0
+        active_count = 0
+        for ticker, data in state.items():
+            config = STOCKS.get(ticker)
+            if not config:
+                continue
+                
+            try:
+                # Fetch latest daily data to get current price
+                df = tv.get_hist(symbol=ticker, exchange=config['exchange'], interval=Interval.in_daily, n_bars=1)
+                if df is not None and not df.empty:
+                    current_price = df.iloc[-1]['close']
+                else:
+                    current_price = data['entry_price'] # fallback
+            except Exception as e:
+                print(f"Error fetching price for report for {ticker}: {e}")
+                current_price = data['entry_price']
+                
+            entry_price = data['entry_price']
+            pnl_pct = ((current_price - entry_price) / entry_price) * 100
+            total_active_pnl_sum += pnl_pct
+            active_count += 1
             
-        try:
-            # Fetch latest daily data to get current price
-            df = tv.get_hist(symbol=ticker, exchange=config['exchange'], interval=Interval.in_daily, n_bars=1)
-            if df is not None and not df.empty:
-                current_price = df.iloc[-1]['close']
-            else:
-                current_price = data['entry_price'] # fallback
-        except Exception as e:
-            print(f"Error fetching price for report for {ticker}: {e}")
-            current_price = data['entry_price']
+            pnl_emoji = "🟢" if pnl_pct >= 0 else "🔴"
+            pnl_sign = "+" if pnl_pct >= 0 else ""
             
-        entry_price = data['entry_price']
-        pnl_pct = ((current_price - entry_price) / entry_price) * 100
-        total_pnl_sum += pnl_pct
-        count += 1
-        
-        pnl_emoji = "🟢" if pnl_pct >= 0 else "🔴"
-        pnl_sign = "+" if pnl_pct >= 0 else ""
-        
-        msg_lines.append(
-            f"• <b>{config['name']} ({ticker})</b>\n"
-            f"  📅 Entry Date: {data['date']}\n"
-            f"  🚪 Entry Price: ₹{entry_price:.2f}\n"
-            f"  💵 Current Price: ₹{current_price:.2f}\n"
-            f"  📊 P&L: {pnl_emoji} <b>{pnl_sign}{pnl_pct:.2f}%</b>\n"
-        )
-        
-    if count > 0:
-        avg_pnl = total_pnl_sum / count
-        avg_sign = "+" if avg_pnl >= 0 else ""
-        avg_emoji = "🟢" if avg_pnl >= 0 else "🔴"
-        msg_lines.append(f"\n📈 <b>Average P&L:</b> {avg_emoji} <b>{avg_sign}{avg_pnl:.2f}%</b>")
-        
+            msg_lines.append(
+                f"• <b>{config.get('name', ticker)} ({ticker})</b>\n"
+                f"  📅 Entry Date: {data['date']}\n"
+                f"  🚪 Entry Price: ₹{entry_price:.2f}\n"
+                f"  💵 Current Price: ₹{current_price:.2f}\n"
+                f"  📊 P&L: {pnl_emoji} <b>{pnl_sign}{pnl_pct:.2f}%</b>\n"
+            )
+            
+        if active_count > 0:
+            avg_pnl = total_active_pnl_sum / active_count
+            avg_sign = "+" if avg_pnl >= 0 else ""
+            avg_emoji = "🟢" if avg_pnl >= 0 else "🔴"
+            msg_lines.append(f"📈 <b>Average Active P&L:</b> {avg_emoji} <b>{avg_sign}{avg_pnl:.2f}%</b>\n")
+            
+    # 2. Exited Holdings
+    msg_lines.append("🟥 <b>Exited Holdings (Sold since May 2026)</b>")
+    
+    # Filter out active tickers from exited list just in case
+    active_tickers = set(state.keys())
+    exited_to_show = [t for t in closed_trades if t['ticker'] not in active_tickers]
+    
+    if not exited_to_show:
+        msg_lines.append("<i>No exited holdings to show.</i>")
+    else:
+        for t in exited_to_show:
+            pnl_pct = t.get('pnl_pct', 0)
+            pnl_emoji = "🟢" if pnl_pct >= 0 else "🔴"
+            pnl_sign = "+" if pnl_pct >= 0 else ""
+            
+            # Extract plain text from reason (e.g. stripping HTML)
+            reason_clean = re.sub('<[^<]+?>', '', t.get('reason', ''))
+            
+            msg_lines.append(
+                f"• <b>{t.get('name', t['ticker'])} ({t['ticker']})</b>\n"
+                f"  📅 Held: {t.get('entry_date', 'N/A')} to {t.get('exit_date', 'N/A')}\n"
+                f"  🚪 Entry: ₹{t.get('entry_price', 0):.2f} | Exit: ₹{t.get('exit_price', 0):.2f}\n"
+                f"  📊 Realized P&L: {pnl_emoji} <b>{pnl_sign}{pnl_pct:.2f}%</b> ({reason_clean})\n"
+            )
+            
     send_telegram_message("\n".join(msg_lines))
 
 def get_news(stock_name, ticker=None):
@@ -440,6 +599,12 @@ def check_news_stream():
 
 def send_pre_market_report():
     print(f"\n[{datetime.now(IST).strftime('%Y-%m-%d %H:%M:%S')}] Fetching pre-market report...")
+    today = datetime.now(IST).date()
+    if is_market_closed(today):
+        send_telegram_message("🔔 <b>Notice:</b> Today market is closed.")
+        print("Market is closed today. Sent holiday notice.")
+        return
+        
     query = "nifty+pre-market+OR+gift+nifty+moneycontrol+OR+economic+times"
     url = f"https://news.google.com/rss/search?q={query}&hl=en-IN&gl=IN&ceid=IN:en"
     try:
@@ -484,6 +649,11 @@ def calculate_indicators(df):
 
 def analyze_stocks():
     global tv
+    today = datetime.now(IST).date()
+    if is_market_closed(today):
+        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Today market is closed. Skipping stock analysis.")
+        return
+        
     print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Running TradingView market analysis...")
     state = load_state()
     
@@ -556,11 +726,26 @@ def analyze_stocks():
                     msg += f"🚪 Entry Price: ₹{entry_price:.2f}\n"
                     msg += f"💵 Exit Price: ₹{current_close:.2f}\n"
                     msg += f"📊 Profit/Loss: <b>{profit_pct:.2f}%</b>\n\n"
+                    prob = config.get('probability')
+                    if prob is not None:
+                        msg += f"🎲 Setup Probability: {prob * 100:.0f}%\n"
                     msg += f"📰 <b>Recent News:</b>\n{get_news(config['name'], ticker)}"
                     
                     print(f"Sending SELL alert for {ticker} (Reason: {sell_reason})")
                     send_telegram_message(msg)
                     add_reminder(ticker, "SELL", msg)
+                    
+                    # Log to closed trades
+                    log_closed_trade(
+                        ticker=ticker,
+                        name=config['name'],
+                        entry_price=entry_price,
+                        exit_price=current_close,
+                        entry_date=trade.get('date', 'Unknown'),
+                        exit_date=date_str,
+                        pnl_pct=profit_pct,
+                        reason=sell_reason
+                    )
                     
                     # Remove from active trades
                     del state[ticker]
@@ -592,6 +777,9 @@ def analyze_stocks():
                     msg += f"🎯 Target Price: ₹{current_close * (1 + config['tp']):.2f} (+{config['tp']*100}%)\n"
                     msg += f"🛡️ Stop Loss: ₹{current_close * (1 - config['sl']):.2f} (-{config['sl']*100}%)\n"
                     msg += f"📈 Trail Activation: +{config['trail_act']*100}%\n"
+                    prob = config.get('probability')
+                    if prob is not None:
+                        msg += f"🎲 Setup Probability: {prob * 100:.0f}%\n"
                     msg += f"⚙️ Strategy: AI Wealth Builder (Trend + Cooldown)\n\n"
                     msg += f"📰 <b>Recent News:</b>\n{get_news(config['name'], ticker)}"
                     
