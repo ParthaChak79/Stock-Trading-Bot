@@ -359,5 +359,15 @@
         "trail_buf": 0.03,
         "probability": 0.81,
         "yf_ticker": "THYROCARE.NS"
+    },
+    "SJS": {
+        "exchange": "NSE",
+        "name": "SJS Enterprises",
+        "tp": 0.25,
+        "sl": 0.14,
+        "trail_act": 0.13,
+        "trail_buf": 0.11,
+        "probability": 0.75,
+        "yf_ticker": "SJS.NS"
     }
 }
