@@ -186,7 +186,8 @@ def load_stocks_config():
         "LUPIN": {"exchange": "NSE", "name": "Lupin Ltd", "tp": 0.15, "sl": 0.30, "trail_act": 0.12, "trail_buf": 0.11, "yf_ticker": "LUPIN.NS"},
         "RRKABEL": {"exchange": "NSE", "name": "RR Kabel Ltd", "tp": 0.10, "sl": 0.08, "trail_act": 0.08, "trail_buf": 0.06, "yf_ticker": "RRKABEL.NS"},
         "PRICOLLTD": {"exchange": "NSE", "name": "Pricol Ltd", "tp": 0.13, "sl": 0.17, "trail_act": 0.10, "trail_buf": 0.05, "yf_ticker": "PRICOLLTD.NS"},
-        "THYROCARE": {"exchange": "NSE", "name": "Thyrocare", "tp": 0.15, "sl": 0.18, "trail_act": 0.08, "trail_buf": 0.03, "yf_ticker": "THYROCARE.NS"}
+        "THYROCARE": {"exchange": "NSE", "name": "Thyrocare", "tp": 0.15, "sl": 0.18, "trail_act": 0.08, "trail_buf": 0.03, "yf_ticker": "THYROCARE.NS"},
+        "SJS": {"exchange": "NSE", "name": "SJS Enterprises", "tp": 0.25, "sl": 0.14, "trail_act": 0.13, "trail_buf": 0.11, "probability": 0.75, "yf_ticker": "SJS.NS"}
     }
 
 STOCKS = load_stocks_config()
@@ -345,7 +346,7 @@ def send_telegram_message(message):
 
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
         print("\n--- Telegram credentials missing! Please configure .env file ---")
-        return
+        return False
     
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     payload = {
@@ -357,8 +358,12 @@ def send_telegram_message(message):
     try:
         response = requests.post(url, json=payload)
         response.raise_for_status()
+        return True
     except Exception as e:
         print(f"Error sending telegram message: {e}")
+        if hasattr(e, 'response') and e.response is not None:
+            print(f"Response: {e.response.text}")
+        return False
 
 REMINDERS_FILE = os.path.join(BASE_DIR, "signal_reminders.json")
 
@@ -401,13 +406,16 @@ def check_and_send_reminders():
             try:
                 triggered_date = datetime.strptime(r["date_triggered"], "%Y-%m-%d").date()
                 if today > triggered_date:
-                    orig_msg = r["message"]
+                    orig_msg = r.get("message", "")
+                if orig_msg:
                     # Prefix with a reminder label
                     reminder_msg = f"🔔 <b>YESTERDAY'S SIGNAL REMINDER</b> 🔔\n\n{orig_msg}"
-                    send_telegram_message(reminder_msg)
-                    r["reminder_sent"] = True
-                    updated = True
-                    print(f"Sent reminder for {r['ticker']} {r['type']} signal from {r['date_triggered']}")
+                    if send_telegram_message(reminder_msg):
+                        r["reminder_sent"] = True
+                        updated = True
+                        print(f"Sent reminder for {r['ticker']} {r['type']} signal from {r['date_triggered']}")
+                    else:
+                        print(f"Failed to send reminder for {r['ticker']}. Will retry next cycle.")
             except Exception as e:
                 print(f"Error parsing triggered date for {r['ticker']}: {e}")
                 
@@ -750,24 +758,26 @@ def analyze_stocks():
                     msg += f"\n#{ticker} #NSE"
                     
                     print(f"Sending SELL alert for {ticker} (Reason: {sell_reason})")
-                    send_telegram_message(msg)
-                    add_reminder(ticker, "SELL", msg)
-                    
-                    # Log to closed trades
-                    log_closed_trade(
-                        ticker=ticker,
-                        name=config['name'],
-                        entry_price=entry_price,
-                        exit_price=current_close,
-                        entry_date=trade.get('date', 'Unknown'),
-                        exit_date=date_str,
-                        pnl_pct=profit_pct,
-                        reason=sell_reason
-                    )
-                    
-                    # Remove from active trades
-                    del state[ticker]
-                    save_state(state)
+                    if send_telegram_message(msg):
+                        add_reminder(ticker, "SELL", msg)
+                        
+                        # Log to closed trades
+                        log_closed_trade(
+                            ticker=ticker,
+                            name=config['name'],
+                            entry_price=entry_price,
+                            exit_price=current_close,
+                            entry_date=trade.get('date', 'Unknown'),
+                            exit_date=date_str,
+                            pnl_pct=profit_pct,
+                            reason=sell_reason
+                        )
+                        
+                        # Remove from active trades
+                        del state[ticker]
+                        save_state(state)
+                    else:
+                        print(f"Failed to send SELL alert for {ticker}. Will retry next cycle.")
                 else:
                     # Logging ongoing trade
                     print(f"{ticker} [HOLD] - Current: ₹{current_close:.2f} | Entry: ₹{entry_price:.2f} | High: ₹{highest_price:.2f} | Stop: ₹{stop_price:.2f}")
@@ -781,14 +791,6 @@ def analyze_stocks():
                 is_trend_intact = current_close > (sma_50 * (1 + SMA_PCT))
                 
                 if is_cooled_off and is_trend_intact:
-                    # Enter Trade
-                    state[ticker] = {
-                        "entry_price": current_close,
-                        "highest_price": current_high,
-                        "date": date_str
-                    }
-                    save_state(state)
-                    
                     msg = f"━━━━━━━━━━━━━━━━━━━━━━\n🚀 <b>BUY ALERT: {config['name']}</b>\n━━━━━━━━━━━━━━━━━━━━━━\n"
                     msg += f"🗓️ Date: {date_str}\n\n"
                     msg += f"🟢 Entry Price: ₹{current_close:.2f}\n"
@@ -803,8 +805,17 @@ def analyze_stocks():
                     msg += f"\n#{ticker} #NSE"
                     
                     print(f"Sending BUY alert for {ticker}")
-                    send_telegram_message(msg)
-                    add_reminder(ticker, "BUY", msg)
+                    if send_telegram_message(msg):
+                        # Enter Trade
+                        state[ticker] = {
+                            "entry_price": current_close,
+                            "highest_price": current_high,
+                            "date": date_str
+                        }
+                        save_state(state)
+                        add_reminder(ticker, "BUY", msg)
+                    else:
+                        print(f"Failed to send BUY alert for {ticker}. Will retry next cycle.")
                 else:
                     print(f"{ticker} [WAIT] - Cooldown: {is_cooled_off} ({hist_line:.2f}), Trend Intact: {is_trend_intact}")
                     
