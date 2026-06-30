@@ -187,7 +187,10 @@ def load_stocks_config():
         "RRKABEL": {"exchange": "NSE", "name": "RR Kabel Ltd", "tp": 0.10, "sl": 0.08, "trail_act": 0.08, "trail_buf": 0.06, "yf_ticker": "RRKABEL.NS"},
         "PRICOLLTD": {"exchange": "NSE", "name": "Pricol Ltd", "tp": 0.13, "sl": 0.17, "trail_act": 0.10, "trail_buf": 0.05, "yf_ticker": "PRICOLLTD.NS"},
         "THYROCARE": {"exchange": "NSE", "name": "Thyrocare", "tp": 0.15, "sl": 0.18, "trail_act": 0.08, "trail_buf": 0.03, "yf_ticker": "THYROCARE.NS"},
-        "SJS": {"exchange": "NSE", "name": "SJS Enterprises", "tp": 0.25, "sl": 0.14, "trail_act": 0.13, "trail_buf": 0.11, "probability": 0.75, "yf_ticker": "SJS.NS"}
+        "SJS": {"exchange": "NSE", "name": "SJS Enterprises", "tp": 0.25, "sl": 0.14, "trail_act": 0.13, "trail_buf": 0.11, "probability": 0.75, "yf_ticker": "SJS.NS"},
+        "NH": {"exchange": "NSE", "name": "Narayana Hrudayalaya Ltd", "tp": 0.23, "sl": 0.26, "trail_act": 0.12, "trail_buf": 0.09, "probability": 0.92, "yf_ticker": "NH.NS"},
+        "CAPLIPOINT": {"exchange": "NSE", "name": "Caplin Point Laboratories", "tp": 0.23, "sl": 0.26, "trail_act": 0.08, "trail_buf": 0.05, "probability": 0.81, "yf_ticker": "CAPLIPOINT.NS"},
+        "MEDANTA": {"exchange": "NSE", "name": "Global Health Limited (Medanta)", "tp": 0.23, "sl": 0.18, "trail_act": 0.11, "trail_buf": 0.05, "probability": 0.85, "yf_ticker": "MEDANTA.NS"}
     }
 
 STOCKS = load_stocks_config()
