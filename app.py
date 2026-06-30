@@ -178,7 +178,7 @@ def load_stocks_config():
         "KAYNES": {"exchange": "NSE", "name": "Kaynes Technology", "tp": 0.23, "sl": 0.13, "trail_act": 0.15, "trail_buf": 0.10},
         "PIIND": {"exchange": "NSE", "name": "PI Industries", "tp": 0.20, "sl": 0.17, "trail_act": 0.16, "trail_buf": 0.08},
         "ASTRAMICRO": {"exchange": "NSE", "name": "Astra Microwave Products", "tp": 0.29, "sl": 0.25, "trail_act": 0.12, "trail_buf": 0.08},
-        "NIFTY": {"exchange": "NSE", "name": "NIFTY50 Index", "tp": 0.25, "sl": 0.24, "trail_act": 0.13, "trail_buf": 0.07, "yf_ticker": "^NSEI"},
+        "NIFTY": {"exchange": "NSE", "name": "NIFTY50 Index", "tp": 0.21, "sl": 0.27, "trail_act": 0.10, "trail_buf": 0.07, "yf_ticker": "^NSEI"},
         "KEI": {"exchange": "NSE", "name": "KEI Industries Limited", "tp": 0.26, "sl": 0.20, "trail_act": 0.15, "trail_buf": 0.05, "yf_ticker": "KEI.NS"},
         "NAVINFLUOR": {"exchange": "NSE", "name": "Navin Fluorine International Limited", "tp": 0.19, "sl": 0.185, "trail_act": 0.10, "trail_buf": 0.07, "yf_ticker": "NAVINFLUOR.NS"},
         "ZYDUSLIFE": {"exchange": "NSE", "name": "Zydus Lifesciences Limited", "tp": 0.18, "sl": 0.19, "trail_act": 0.08, "trail_buf": 0.06, "yf_ticker": "ZYDUSLIFE.NS"},

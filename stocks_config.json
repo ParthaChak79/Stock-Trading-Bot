@@ -273,11 +273,11 @@
     "NIFTY": {
         "exchange": "NSE",
         "name": "NIFTY50 Index",
-        "tp": 0.25,
-        "sl": 0.24,
-        "trail_act": 0.13,
+        "tp": 0.21,
+        "sl": 0.27,
+        "trail_act": 0.10,
         "trail_buf": 0.07,
-        "probability": 0.79,
+        "probability": 0.84,
         "yf_ticker": "^NSEI"
     },
     "KEI": {
