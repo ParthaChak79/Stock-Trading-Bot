@@ -1,0 +1,90 @@
+// @version=5
+strategy("AI Wealth Builder (+2626% Profit) with Trailing Stop", overlay=true, initial_capital=100000, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
+
+// --- Inputs ---
+// MACD Parameters
+macd_fast = input.int(12, "MACD Fast", group="Momentum Cooldown")
+macd_slow = input.int(26, "MACD Slow", group="Momentum Cooldown")
+macd_sig  = input.int(9, "MACD Signal", group="Momentum Cooldown")
+
+// AI-Discovered MACD Thresholds for Wealth Builder
+hist_min = input.float(-10.0, "MACD Hist Min (Cooldown Bottom)", group="Momentum Cooldown")
+hist_max = input.float(2.0, "MACD Hist Max (Cooldown Top)", group="Momentum Cooldown")
+
+// Trend Filter Parameters
+sma_len = input.int(50, "Trend SMA Length", group="Trend Filter")
+sma_pct = input.float(0.0, "Minimum % Above SMA", group="Trend Filter") / 100.0
+
+// Exit Targets
+tp_pct = input.float(20.0, "Take Profit (%)", step=1.0, group="Exit Strategy") / 100.0
+sl_pct = input.float(10.0, "Stop Loss (%)", step=0.5, group="Exit Strategy") / 100.0
+
+// Trailing Stop Logic Inputs
+use_trailing = input.bool(true, "Use Trailing Stop", group="Exit Strategy", tooltip="Moves Stop Loss to Breakeven+Buffer once Activation % is hit")
+trail_activation_pct = input.float(10.0, "Trail Activation (%)", step=1.0, group="Exit Strategy") / 100.0
+trail_offset_pct = input.float(1.0, "Trail Breakeven Buffer (%)", step=0.5, group="Exit Strategy") / 100.0
+
+// --- Calculations ---
+[macdLine, signalLine, histLine] = ta.macd(close, macd_fast, macd_slow, macd_sig)
+trend_sma = ta.sma(close, sma_len)
+
+// Track the highest price reached during a trade
+var float highest_price = na
+if strategy.position_size > 0
+    if strategy.position_size[1] == 0
+        highest_price := high // First bar of trade
+    else
+        highest_price := math.max(highest_price, high) // Track max high
+else
+    highest_price := na
+
+// --- Logic ---
+// 1. MACD Cooldown Condition 
+is_cooled_off = (histLine > hist_min) and (histLine <= hist_max)
+
+// 2. Trend Condition (Price remains above the 50 SMA)
+is_trend_intact = close > (trend_sma * (1 + sma_pct))
+
+// Entry Trigger (Wait for conditions to align)
+buy_condition = is_cooled_off and is_trend_intact
+
+if (buy_condition and strategy.position_size == 0)
+    strategy.entry("AI Buy", strategy.long, comment="AI: Trend + Cooldown")
+
+// Exit Conditions
+if (strategy.position_size > 0)
+    entry_price = strategy.position_avg_price
+    target_price = entry_price * (1 + tp_pct)
+    
+    if use_trailing
+        // If highest price reached our activation threshold, move SL to breakeven + buffer
+        activation_price = entry_price * (1 + trail_activation_pct)
+        stop_price = highest_price >= activation_price ? (entry_price * (1 + trail_offset_pct)) : (entry_price * (1 - sl_pct))
+        
+        strategy.exit("Target/Trail", "AI Buy", limit=target_price, stop=stop_price)
+    else
+        // Classic Fixed Stop
+        stop_price = entry_price * (1 - sl_pct)
+        strategy.exit("Target/Stop", "AI Buy", limit=target_price, stop=stop_price)
+
+// --- Visuals ---
+// Plot Trend Line
+plot(trend_sma, title="SMA 50", color=color.new(color.blue, 0), linewidth=3)
+
+// Paint the background gold when momentum has successfully cooled off
+bgcolor(is_cooled_off ? color.new(color.orange, 90) : na, title="Cooldown Zone")
+
+// Show AI Buy Signals
+plotshape(buy_condition and strategy.position_size == 0, title="BUY", location=location.belowbar, color=color.orange, style=shape.labelup, text="WEALTH BUY", textcolor=color.white)
+
+// --- Dashboard ---
+var table dash = table.new(position.bottom_right, 2, 4, bgcolor=color.new(color.black, 80), border_width=1)
+if barstate.islast
+    table.cell(dash, 0, 0, "AI Strategy", text_color=color.white)
+    table.cell(dash, 1, 0, "Wealth Builder", text_color=color.orange)
+    table.cell(dash, 0, 1, "MACD Hist Status", text_color=color.white)
+    table.cell(dash, 1, 1, is_cooled_off ? "COOLED OFF (Ready)" : "RUNNING HOT (Wait)", text_color=is_cooled_off ? color.green : color.red)
+    table.cell(dash, 0, 2, "Trend Status", text_color=color.white)
+    table.cell(dash, 1, 2, is_trend_intact ? "Above SMA 50" : "Below Support", text_color=is_trend_intact ? color.green : color.red)
+    table.cell(dash, 0, 3, "AI Target", text_color=color.white)
+    table.cell(dash, 1, 3, use_trailing ? "+20% / Trail SL" : "+20% / -10%", text_color=color.yellow)

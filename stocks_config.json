@@ -12,10 +12,10 @@
         "exchange": "NSE",
         "name": "EPL",
         "tp": 0.27,
-        "sl": 0.26,
+        "sl": 0.32,
         "trail_act": 0.18,
         "trail_buf": 0.09,
-        "probability": 0.84
+        "probability": 0.82
     },
     "APOLLOHOSP": {
         "exchange": "NSE",
@@ -65,11 +65,11 @@
     "TVSMOTOR": {
         "exchange": "NSE",
         "name": "TVS Motors",
-        "tp": 0.28,
-        "sl": 0.24,
-        "trail_act": 0.14,
-        "trail_buf": 0.08,
-        "probability": 0.75
+        "tp": 0.23,
+        "sl": 0.26,
+        "trail_act": 0.12,
+        "trail_buf": 0.09,
+        "probability": 0.80
     },
     "BEL": {
         "exchange": "NSE",
@@ -356,7 +356,7 @@
         "tp": 0.15,
         "sl": 0.18,
         "trail_act": 0.08,
-        "trail_buf": 0.03,
+        "trail_buf": 0.04,
         "probability": 0.81,
         "yf_ticker": "THYROCARE.NS"
     },

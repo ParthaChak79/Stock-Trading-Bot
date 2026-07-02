@@ -8,3 +8,6 @@ __pycache__/
 optimization_results.csv
 signal_reminders.json
 closed_trades.json
+.venv/
+wfo/data_cache/
+wfo/results/

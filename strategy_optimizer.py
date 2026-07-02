@@ -84,7 +84,7 @@ import yfinance as yf
 # 1. CONFIG - edit this block for your ticker / search ranges
 # ==============================================================================
 
-TICKER = "LUPIN.NS"          # <-- change to your stock (used when DATA_SOURCE = "yfinance")
+TICKER = "EPL.NS"          # <-- change to your stock (used when DATA_SOURCE = "yfinance")
 START_DATE = "2015-01-01"  # <-- "entire history" -> use the IPO date or far back
 INTERVAL = "1d"
 
@@ -105,18 +105,18 @@ ENTRY_GRID = {
     "hist_min": [-10],
     "hist_max": [2],
     "trend_sma_length": [50],
-    "min_pct_above_sma": [2],
+    "min_pct_above_sma": [0],   # matches Pine script default (sma_pct = 0.0)
 }
 
 # Exit parameters to optimize - these are the ones you tuned manually.
 # Step sizes below are coarse to keep the grid fast; narrow the range once
 # you see roughly where the good zone is.
 EXIT_GRID = {
-    "take_profit_pct": [12, 15, 18, 21, 24, 27, 30],
-    "stop_loss_pct": [12, 15, 18, 21, 24, 27, 30],
+    "take_profit_pct": list(range(7, 36)),         # 7 to 35, step 1
+    "stop_loss_pct": list(range(7, 36)),           # 7 to 35, step 1
     "use_trailing": [True],
-    "trail_activation_pct": [6, 9, 12, 15],
-    "trail_breakeven_buffer_pct": [5, 10, 15, 20],
+    "trail_activation_pct": list(range(6, 31)),    # 6 to 30, step 1
+    "trail_breakeven_buffer_pct": list(range(2, 31)),  # 2 to 30, step 1
 }
 
 TARGET_WIN_RATE = 80.0      # %
@@ -144,13 +144,56 @@ def load_data(ticker: str, start: str, interval: str) -> pd.DataFrame:
 
 
 def load_data_from_tv(ticker: str) -> pd.DataFrame:
+    import os
+    from dotenv import load_dotenv
     from tvDatafeed import TvDatafeed, Interval
-    tv = TvDatafeed()
+
+    load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+    username = os.getenv("TV_USERNAME")
+    password = os.getenv("TV_PASSWORD")
+
+    if username and password:
+        print(f"Logging in to TradingView as {username} (full chart data) ...")
+        # tvDatafeed's default signin request has no User-Agent, which
+        # TradingView blocks with a "rate_limit" error. Inject a browser
+        # User-Agent (+Origin/Content-Type) so the login actually succeeds.
+        TvDatafeed._TvDatafeed__signin_headers = {
+            'Referer': 'https://www.tradingview.com',
+            'User-Agent': ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
+                           'AppleWebKit/537.36 (KHTML, like Gecko) '
+                           'Chrome/124.0.0.0 Safari/537.36'),
+            'Origin': 'https://www.tradingview.com',
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }
+        tv = TvDatafeed(username=username, password=password)
+    else:
+        print("WARNING: No TV_USERNAME/TV_PASSWORD in .env -> nologin mode "
+              "(limited data, may NOT match your TradingView chart)")
+        tv = TvDatafeed()
+
     symbol = ticker.split('.')[0]
-    df = tv.get_hist(symbol=symbol, exchange='NSE', interval=Interval.in_daily, n_bars=5000)
+    # n_bars=5000 only reaches ~2006; request far more to get the full history
+    # TradingView charts (e.g. EPL back to 1999). No date floor -> match the chart.
+    # tvDatafeed's websocket connection is flaky and often returns None on the
+    # first try (or when login is rate-limited), so retry a few times.
+    import time
+    df = None
+    for attempt in range(1, 5):
+        df = tv.get_hist(symbol=symbol, exchange='NSE',
+                         interval=Interval.in_daily, n_bars=20000)
+        if df is not None and len(df) > 0:
+            break
+        print(f"  data fetch attempt {attempt} returned nothing; retrying ...")
+        time.sleep(5)
+
+    if df is None or len(df) == 0:
+        raise RuntimeError(
+            f"Could not fetch data for {symbol} from TradingView after retries. "
+            "Login may be rate-limited (wait a few minutes) or the symbol/exchange "
+            "is wrong. Check for 'error while signin' above.")
+
     df = df.rename(columns=str.lower)
     df = df.dropna(subset=["open", "high", "low", "close"])
-    df = df[df.index >= "2007-01-01"]
     return df
 
 
@@ -419,25 +462,41 @@ if __name__ == "__main__":
     results.to_csv("optimization_results.csv", index=False)
     print(f"\nFull grid: {len(results)} combos tested -> saved to optimization_results.csv")
 
+    # Filter by minimum trades first
+    min_trades_filtered = results[results.num_trades >= MIN_TRADES]
+    print(f"After filtering for {MIN_TRADES}+ trades: {len(min_trades_filtered)} combos remain\n")
+
+    display_cols = ["take_profit_pct", "stop_loss_pct", "trail_activation_pct",
+                     "trail_breakeven_buffer_pct", "num_trades", "win_rate",
+                     "profit_factor", "total_return_pct", "max_drawdown_pct"]
+
+    # Show TOP 20 by WIN RATE (primary metric)
+    print("=" * 120)
+    print("TOP 20 COMBOS BY WIN RATE")
+    print("=" * 120)
+    top_by_winrate = min_trades_filtered.sort_values("win_rate", ascending=False)
+    print(top_by_winrate[display_cols].head(20).to_string(index=False))
+
     qualifying = results[
         (results.win_rate >= TARGET_WIN_RATE)
         & (results.profit_factor >= TARGET_PROFIT_FACTOR)
         & (results.num_trades >= MIN_TRADES)
     ]
-    print(f"{len(qualifying)} combos meet win_rate>={TARGET_WIN_RATE}%, "
+    print(f"\n{len(qualifying)} combos meet win_rate>={TARGET_WIN_RATE}%, "
           f"profit_factor>={TARGET_PROFIT_FACTOR}, trades>={MIN_TRADES}\n")
 
-    display_cols = ["take_profit_pct", "stop_loss_pct", "trail_activation_pct",
-                     "trail_breakeven_buffer_pct", "num_trades", "win_rate",
-                     "profit_factor", "total_return_pct", "max_drawdown_pct"]
     if len(qualifying):
+        print("=" * 120)
+        print("QUALIFYING COMBOS (WIN RATE >= 80% AND PROFIT FACTOR >= 2.0)")
+        print("=" * 120)
         print(qualifying[display_cols].head(20).to_string(index=False))
 
         best = qualifying.iloc[0].to_dict()
         print(f"\nTop combo (by profit factor): {best}")
         walk_forward_check(df_raw, best, TRAIN_FRACTION)
     else:
-        print("No combo hit the targets on this grid/history. Try widening "
-              "EXIT_GRID ranges, lowering MIN_TRADES, or check the top rows "
-              "of optimization_results.csv to see how close you got:")
-        print(results[display_cols].head(10).to_string(index=False))
+        print("=" * 120)
+        print("NO COMBOS HIT THE TARGETS - Showing top performers instead")
+        print("=" * 120)
+        print("Combos ranked by win rate:")
+        print(top_by_winrate[display_cols].head(10).to_string(index=False))

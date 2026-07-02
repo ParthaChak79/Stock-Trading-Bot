@@ -79,20 +79,72 @@ def is_duplicate_title(new_title, seen_titles, threshold=0.6):
             return True
     return False
 
-def analyze_sentiment(title, summary):
+def _keyword_sentiment(title, summary):
+    """Fallback keyword sentiment (used only if FinBERT can't be loaded)."""
     title_text = title.lower()
     summary_text = (summary or '').lower()
-    
+
     # Weight title 2x
     pos_count = sum(2 if word in title_text else 1 for word in POSITIVE_WORDS if word in title_text or word in summary_text)
     neg_count = sum(2 if word in title_text else 1 for word in NEGATIVE_WORDS if word in title_text or word in summary_text)
-    
+
     if pos_count > neg_count:
         return "positive"
     elif neg_count > pos_count:
         return "negative"
     else:
         return "neutral"
+
+
+# FinBERT (ProsusAI/finbert) is a financial-domain sentiment model — far more
+# accurate on market headlines than keyword matching. It's called via the free
+# HuggingFace Inference API (no local model/torch needed). Set HF_API_TOKEN in .env
+# to a free token from https://huggingface.co/settings/tokens. If the token is
+# missing or the API errors, we fall back to keyword sentiment so the bot never breaks.
+HF_API_TOKEN = clean_env_var(os.getenv("HF_API_TOKEN"))
+HF_FINBERT_URL = "https://router.huggingface.co/hf-inference/models/ProsusAI/finbert"
+_finbert_warned = False
+
+
+def _finbert_api(text):
+    """Query FinBERT via the HuggingFace Inference API. Returns a label or None."""
+    global _finbert_warned
+    if not HF_API_TOKEN:
+        if not _finbert_warned:
+            print("WARNING: HF_API_TOKEN not set — using keyword sentiment. "
+                  "Add a free token from huggingface.co/settings/tokens to .env for FinBERT.")
+            _finbert_warned = True
+        return None
+    try:
+        resp = requests.post(
+            HF_FINBERT_URL,
+            headers={"Authorization": f"Bearer {HF_API_TOKEN}"},
+            json={"inputs": text[:2000], "options": {"wait_for_model": True}},
+            timeout=20,
+        )
+        data = resp.json()
+        # success shape: [[{"label": "...", "score": ...}, ...]]
+        if isinstance(data, list) and data and isinstance(data[0], list):
+            best = max(data[0], key=lambda d: d.get("score", 0))
+            return best["label"].lower()
+        print(f"FinBERT API unexpected response ({data}); using keyword fallback.")
+    except Exception as e:
+        print(f"FinBERT API error ({e}); using keyword fallback.")
+    return None
+
+
+def analyze_sentiment(title, summary):
+    """Return 'positive' / 'negative' / 'neutral' for a news item using FinBERT."""
+    text = (title or "").strip()
+    if summary:
+        text = f"{text}. {summary.strip()}".strip()
+    if not text:
+        return "neutral"
+
+    label = _finbert_api(text)
+    if label in ("positive", "negative", "neutral"):
+        return label
+    return _keyword_sentiment(title, summary)
 
 # Strategy Parameters
 MACD_FAST = 12
@@ -149,13 +201,13 @@ def load_stocks_config():
     # Fallback to hardcoded dict if file doesn't exist
     return {
         "BRITANNIA": {"exchange": "NSE", "name": "Britannia", "tp": 0.25, "sl": 0.20, "trail_act": 0.17, "trail_buf": 0.08},
-        "EPL": {"exchange": "NSE", "name": "EPL", "tp": 0.27, "sl": 0.26, "trail_act": 0.18, "trail_buf": 0.09},
+        "EPL": {"exchange": "NSE", "name": "EPL", "tp": 0.27, "sl": 0.32, "trail_act": 0.18, "trail_buf": 0.09},
         "APOLLOHOSP": {"exchange": "NSE", "name": "Apollo Hospitals", "tp": 0.27, "sl": 0.23, "trail_act": 0.15, "trail_buf": 0.09},
         "BHARTIARTL": {"exchange": "NSE", "name": "Bharti Airtel", "tp": 0.30, "sl": 0.23, "trail_act": 0.14, "trail_buf": 0.07},
         "TORNTPOWER": {"exchange": "NSE", "name": "Torrent Power", "tp": 0.29, "sl": 0.23, "trail_act": 0.12, "trail_buf": 0.08},
         "PIDILITIND": {"exchange": "NSE", "name": "Pidilite", "tp": 0.28, "sl": 0.23, "trail_act": 0.13, "trail_buf": 0.07},
         "NATCOPHARM": {"exchange": "NSE", "name": "Natco Pharma", "tp": 0.27, "sl": 0.23, "trail_act": 0.13, "trail_buf": 0.09},
-        "TVSMOTOR": {"exchange": "NSE", "name": "TVS Motors", "tp": 0.28, "sl": 0.24, "trail_act": 0.14, "trail_buf": 0.08},
+        "TVSMOTOR": {"exchange": "NSE", "name": "TVS Motors", "tp": 0.23, "sl": 0.26, "trail_act": 0.12, "trail_buf": 0.09},
         "BEL": {"exchange": "NSE", "name": "Bharat Electronics", "tp": 0.33, "sl": 0.24, "trail_act": 0.17, "trail_buf": 0.07},
         "GODREJCP": {"exchange": "NSE", "name": "Godrej Consumer Products", "tp": 0.29, "sl": 0.24, "trail_act": 0.17, "trail_buf": 0.09},
         "SCHNEIDER": {"exchange": "NSE", "name": "Schneider Electric Infrastructure", "tp": 0.25, "sl": 0.22, "trail_act": 0.16, "trail_buf": 0.05},
@@ -186,7 +238,7 @@ def load_stocks_config():
         "LUPIN": {"exchange": "NSE", "name": "Lupin Ltd", "tp": 0.15, "sl": 0.30, "trail_act": 0.12, "trail_buf": 0.11, "yf_ticker": "LUPIN.NS"},
         "RRKABEL": {"exchange": "NSE", "name": "RR Kabel Ltd", "tp": 0.10, "sl": 0.08, "trail_act": 0.08, "trail_buf": 0.06, "yf_ticker": "RRKABEL.NS"},
         "PRICOLLTD": {"exchange": "NSE", "name": "Pricol Ltd", "tp": 0.13, "sl": 0.17, "trail_act": 0.10, "trail_buf": 0.05, "yf_ticker": "PRICOLLTD.NS"},
-        "THYROCARE": {"exchange": "NSE", "name": "Thyrocare", "tp": 0.15, "sl": 0.18, "trail_act": 0.08, "trail_buf": 0.03, "yf_ticker": "THYROCARE.NS"},
+        "THYROCARE": {"exchange": "NSE", "name": "Thyrocare", "tp": 0.15, "sl": 0.18, "trail_act": 0.08, "trail_buf": 0.04, "yf_ticker": "THYROCARE.NS"},
         "SJS": {"exchange": "NSE", "name": "SJS Enterprises", "tp": 0.25, "sl": 0.14, "trail_act": 0.13, "trail_buf": 0.11, "probability": 0.75, "yf_ticker": "SJS.NS"},
         "NH": {"exchange": "NSE", "name": "Narayana Hrudayalaya Ltd", "tp": 0.23, "sl": 0.26, "trail_act": 0.12, "trail_buf": 0.09, "probability": 0.92, "yf_ticker": "NH.NS"},
         "CAPLIPOINT": {"exchange": "NSE", "name": "Caplin Point Laboratories", "tp": 0.23, "sl": 0.26, "trail_act": 0.08, "trail_buf": 0.05, "probability": 0.81, "yf_ticker": "CAPLIPOINT.NS"},
