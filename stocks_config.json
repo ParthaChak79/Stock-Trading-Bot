@@ -429,5 +429,15 @@
         "trail_buf": 0.07,
         "probability": 0.85,
         "yf_ticker": "GRSE.NS"
+    },
+    "SHAILY": {
+        "exchange": "NSE",
+        "name": "Shaily Engineering Plastics Limited",
+        "tp": 0.16,
+        "sl": 0.25,
+        "trail_act": 0.10,
+        "trail_buf": 0.07,
+        "probability": 0.93,
+        "yf_ticker": "SHAILY.NS"
     }
 }
