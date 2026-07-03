@@ -439,5 +439,15 @@
         "trail_buf": 0.07,
         "probability": 0.93,
         "yf_ticker": "SHAILY.NS"
+    },
+    "COALINDIA": {
+        "exchange": "NSE",
+        "name": "Coal India Ltd",
+        "tp": 0.16,
+        "sl": 0.20,
+        "trail_act": 0.10,
+        "trail_buf": 0.07,
+        "probability": 1,
+        "yf_ticker": "COALINDIA.NS"
     }
 }
