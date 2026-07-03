@@ -492,15 +492,13 @@ def send_holdings_report():
         send_telegram_message(msg)
         return
         
-    msg_lines = ["━━━━━━━━━━━━━━━━━━━━━━\n📊 <b>Weekly Portfolio Report</b>\n━━━━━━━━━━━━━━━━━━━━━━\n"]
+    msg_lines = ["━━━━━━━━━━━━━━━━━━━━━━\n📊 <b>Weekly Portfolio Report (Buy Signals - The Last 3 Months)</b>\n━━━━━━━━━━━━━━━━━━━━━━\n"]
     
     # 1. Active Holdings
     msg_lines.append("🟩 <b>Active Holdings</b>")
     if not state:
         msg_lines.append("<i>No active holdings at the moment.</i>\n")
     else:
-        total_active_pnl_sum = 0
-        active_count = 0
         for ticker, data in state.items():
             config = STOCKS.get(ticker)
             if not config:
@@ -519,8 +517,6 @@ def send_holdings_report():
                 
             entry_price = data['entry_price']
             pnl_pct = ((current_price - entry_price) / entry_price) * 100
-            total_active_pnl_sum += pnl_pct
-            active_count += 1
             
             pnl_emoji = "🟢" if pnl_pct >= 0 else "🔴"
             pnl_sign = "+" if pnl_pct >= 0 else ""
@@ -532,12 +528,6 @@ def send_holdings_report():
                 f"  💵 Current Price: ₹{current_price:.2f}\n"
                 f"  📊 P&L: {pnl_emoji} <b>{pnl_sign}{pnl_pct:.2f}%</b>\n"
             )
-            
-        if active_count > 0:
-            avg_pnl = total_active_pnl_sum / active_count
-            avg_sign = "+" if avg_pnl >= 0 else ""
-            avg_emoji = "🟢" if avg_pnl >= 0 else "🔴"
-            msg_lines.append(f"📈 <b>Average Active P&L:</b> {avg_emoji} <b>{avg_sign}{avg_pnl:.2f}%</b>\n")
             
     # 2. Exited Holdings
     msg_lines.append("━━━━━━━━━━━━━━━━━━━━━━\n🟥 <b>Recent Exits (Last 3 Months)</b>\n━━━━━━━━━━━━━━━━━━━━━━")
