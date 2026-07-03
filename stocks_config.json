@@ -419,5 +419,15 @@
         "trail_buf": 0.07,
         "probability": 0.75,
         "yf_ticker": "NEULANDLAB.NS"
+    },
+    "GRSE": {
+        "exchange": "NSE",
+        "name": "Garden Reach Shipbuilders & Engineers Ltd",
+        "tp": 0.19,
+        "sl": 0.26,
+        "trail_act": 0.12,
+        "trail_buf": 0.07,
+        "probability": 0.85,
+        "yf_ticker": "GRSE.NS"
     }
 }

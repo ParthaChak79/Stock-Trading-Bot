@@ -244,7 +244,8 @@ def load_stocks_config():
         "CAPLIPOINT": {"exchange": "NSE", "name": "Caplin Point Laboratories", "tp": 0.23, "sl": 0.26, "trail_act": 0.08, "trail_buf": 0.05, "probability": 0.81, "yf_ticker": "CAPLIPOINT.NS"},
         "MEDANTA": {"exchange": "NSE", "name": "Global Health Limited (Medanta)", "tp": 0.23, "sl": 0.18, "trail_act": 0.11, "trail_buf": 0.05, "probability": 0.85, "yf_ticker": "MEDANTA.NS"},
         "WAAREERTL": {"exchange": "NSE", "name": "Waaree Renewable Technologies Ltd", "tp": 0.28, "sl": 0.12, "trail_act": 0.10, "trail_buf": 0.08, "probability": 0.50, "yf_ticker": "WAAREERTL.NS"},
-        "NEULANDLAB": {"exchange": "NSE", "name": "Neuland Laboratories", "tp": 0.26, "sl": 0.26, "trail_act": 0.10, "trail_buf": 0.07, "probability": 0.75, "yf_ticker": "NEULANDLAB.NS"}
+        "NEULANDLAB": {"exchange": "NSE", "name": "Neuland Laboratories", "tp": 0.26, "sl": 0.26, "trail_act": 0.10, "trail_buf": 0.07, "probability": 0.75, "yf_ticker": "NEULANDLAB.NS"},
+        "GRSE": {"exchange": "NSE", "name": "Garden Reach Shipbuilders & Engineers Ltd", "tp": 0.19, "sl": 0.26, "trail_act": 0.12, "trail_buf": 0.07, "probability": 0.85, "yf_ticker": "GRSE.NS"}
     }
 
 STOCKS = load_stocks_config()
