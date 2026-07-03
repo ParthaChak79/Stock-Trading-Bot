@@ -3,10 +3,10 @@
         "exchange": "NSE",
         "name": "Britannia",
         "tp": 0.25,
-        "sl": 0.2,
+        "sl": 0.26,
         "trail_act": 0.17,
         "trail_buf": 0.08,
-        "probability": 0.77
+        "probability": 0.83
     },
     "EPL": {
         "exchange": "NSE",
@@ -75,10 +75,10 @@
         "exchange": "NSE",
         "name": "Bharat Electronics",
         "tp": 0.33,
-        "sl": 0.24,
+        "sl": 0.27,
         "trail_act": 0.17,
         "trail_buf": 0.07,
-        "probability": 0.67
+        "probability": 0.70
     },
     "GODREJCP": {
         "exchange": "NSE",
