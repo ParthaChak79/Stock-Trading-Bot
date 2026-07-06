@@ -295,7 +295,8 @@ def load_stocks_config():
         "NEULANDLAB": {"exchange": "NSE", "name": "Neuland Laboratories", "tp": 0.26, "sl": 0.26, "trail_act": 0.10, "trail_buf": 0.07, "probability": 0.75, "yf_ticker": "NEULANDLAB.NS"},
         "GRSE": {"exchange": "NSE", "name": "Garden Reach Shipbuilders & Engineers Ltd", "tp": 0.19, "sl": 0.26, "trail_act": 0.14, "trail_buf": 0.11, "probability": 0.85, "yf_ticker": "GRSE.NS"},
         "SHAILY": {"exchange": "NSE", "name": "Shaily Engineering Plastics Limited", "tp": 0.16, "sl": 0.25, "trail_act": 0.10, "trail_buf": 0.07, "probability": 0.93, "yf_ticker": "SHAILY.NS"},
-        "COALINDIA": {"exchange": "NSE", "name": "Coal India Ltd", "tp": 0.16, "sl": 0.20, "trail_act": 0.10, "trail_buf": 0.07, "probability": 1, "yf_ticker": "COALINDIA.NS"}
+        "COALINDIA": {"exchange": "NSE", "name": "Coal India Ltd", "tp": 0.16, "sl": 0.20, "trail_act": 0.10, "trail_buf": 0.07, "probability": 1, "yf_ticker": "COALINDIA.NS"},
+        "MCX": {"exchange": "NSE", "name": "Multi Commodity Exchange of India Limited", "tp": 0.18, "sl": 0.22, "trail_act": 0.06, "trail_buf": 0.04, "yf_ticker": "MCX.NS"}
     }
 
 STOCKS = load_stocks_config()
