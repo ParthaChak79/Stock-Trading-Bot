@@ -84,15 +84,17 @@ import yfinance as yf
 # 1. CONFIG - edit this block for your ticker / search ranges
 # ==============================================================================
 
-TICKER = "EPL.NS"          # <-- change to your stock (used when DATA_SOURCE = "yfinance")
-START_DATE = "2015-01-01"  # <-- "entire history" -> use the IPO date or far back
+TICKER = "GODREJCP.NS"     # <-- change to your stock (.NS suffix stripped for NSE)
+START_DATE = "2001-04-01"  # <-- "entire history"; GODREJCP listed Apr 2001
 INTERVAL = "1d"
 
 # Where to get price history:
+#   "nse"      -> official NSE historical API via jugaad_data (bypasses the
+#                 Yahoo rate-limit; unadjusted for dividends = actual traded prices)
 #   "yfinance" -> auto-downloads from Yahoo Finance, free, full history, no setup
 #   "csv"      -> use a file you exported from TradingView (see load_data_from_csv
 #                 below for how to export, and why you might want to)
-DATA_SOURCE = "tv"
+DATA_SOURCE = "nse"
 CSV_PATH = "tradingview_export.csv"
 
 # Fixed entry parameters (taken straight from your screenshot).
@@ -112,12 +114,21 @@ ENTRY_GRID = {
 # Step sizes below are coarse to keep the grid fast; narrow the range once
 # you see roughly where the good zone is.
 EXIT_GRID = {
-    "take_profit_pct": list(range(7, 36)),         # 7 to 35, step 1
-    "stop_loss_pct": list(range(7, 36)),           # 7 to 35, step 1
+    "take_profit_pct": list(range(10, 31)),        # 10 to 30, step 1
+    "stop_loss_pct": list(range(10, 31)),          # 10 to 30, step 1
     "use_trailing": [True],
-    "trail_activation_pct": list(range(6, 31)),    # 6 to 30, step 1
-    "trail_breakeven_buffer_pct": list(range(2, 31)),  # 2 to 30, step 1
+    "trail_activation_pct": list(range(7, 21)),    # 7 to 20, step 1
+    "trail_breakeven_buffer_pct": list(range(4, 11)),  # 4 to 10, step 1  (trail_offset)
 }
+
+# Constraint on the exit-parameter search space: only test combos where
+#   take_profit > trail_activation > trail_offset
+# (a take-profit below the trail activation, or an offset above activation,
+# is nonsensical for this step-trailing logic). Combos violating this are
+# skipped, which also shrinks the grid substantially.
+def exit_combo_is_valid(xp: dict) -> bool:
+    return (xp["take_profit_pct"] > xp["trail_activation_pct"]
+            > xp["trail_breakeven_buffer_pct"])
 
 TARGET_WIN_RATE = 80.0      # %
 TARGET_PROFIT_FACTOR = 2.0
@@ -134,12 +145,74 @@ TRAIN_FRACTION = 0.70       # walk-forward split: first 70% = in-sample,
 # ==============================================================================
 
 def load_data(ticker: str, start: str, interval: str) -> pd.DataFrame:
-    df = yf.download(ticker, start=start, interval=interval,
-                      auto_adjust=True, progress=False)
+    import time
+    df = None
+    for attempt in range(1, 6):
+        try:
+            df = yf.download(ticker, start=start, interval=interval,
+                              auto_adjust=True, progress=False)
+        except Exception as e:
+            print(f"  yfinance attempt {attempt} error: {e}")
+            df = None
+        if df is not None and len(df) > 0:
+            break
+        wait = attempt * 15
+        print(f"  yfinance attempt {attempt} returned nothing (rate limit?); "
+              f"waiting {wait}s and retrying ...")
+        time.sleep(wait)
+
+    if df is None or len(df) == 0:
+        raise RuntimeError(
+            f"Could not fetch {ticker} from Yahoo Finance after retries "
+            "(likely rate-limited). Wait a few minutes and re-run.")
+
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = df.columns.get_level_values(0)
     df = df.rename(columns=str.lower)
     df = df.dropna(subset=["open", "high", "low", "close"])
+    return df
+
+
+def load_data_from_nse(ticker: str, start: str) -> pd.DataFrame:
+    """
+    Load full daily OHLCV history from the official NSE historical API using
+    jugaad_data. This sidesteps Yahoo Finance's rate limiting entirely.
+
+    Notes:
+      - NSE prices are UNADJUSTED for dividends (they ARE the actual traded
+        prices). COALINDIA has no stock splits, so open/high/low/close are
+        directly usable; dividend gaps are minor for a %-based backtest.
+      - jugaad_data's threaded chunk fetch has a cache-dir race that throws
+        FileExistsError, so we force single-threaded fetching (use_threads=False).
+    """
+    from datetime import date, datetime
+    from jugaad_data.nse import NSEHistory
+
+    symbol = ticker.split('.')[0]
+    start_d = datetime.strptime(start, "%Y-%m-%d").date()
+    end_d = date.today()
+
+    h = NSEHistory()
+    h.use_threads = False  # avoid jugaad_data's cache-dir race on parallel chunks
+
+    print(f"Fetching {symbol} from NSE ({start_d} -> {end_d}) ...")
+    rows = h.stock_raw(symbol, start_d, end_d, "EQ")
+    if not rows:
+        raise RuntimeError(f"NSE returned no data for {symbol}.")
+
+    df = pd.DataFrame(rows)
+    df["date"] = pd.to_datetime(df["mTIMESTAMP"], format="%d-%b-%Y")
+    df = df.rename(columns={
+        "CH_OPENING_PRICE": "open",
+        "CH_TRADE_HIGH_PRICE": "high",
+        "CH_TRADE_LOW_PRICE": "low",
+        "CH_CLOSING_PRICE": "close",
+        "CH_TOT_TRADED_QTY": "volume",
+    })
+    df = df[["date", "open", "high", "low", "close", "volume"]]
+    df = df.dropna(subset=["open", "high", "low", "close"])
+    df = df.set_index("date").sort_index()
+    df = df[~df.index.duplicated(keep="last")]
     return df
 
 
@@ -407,6 +480,8 @@ def run_optimization(df_raw: pd.DataFrame, entry_grid: dict, exit_grid: dict) ->
 
         for xcombo in exit_combos:
             xp = dict(zip(exit_keys, xcombo))
+            if not exit_combo_is_valid(xp):
+                continue
             trades = simulate(df, entries, **xp)
             metrics = compute_metrics(trades)
             rows.append({**ep, **xp, **metrics})
@@ -449,6 +524,9 @@ if __name__ == "__main__":
     if DATA_SOURCE == "csv":
         print(f"Loading price history from {CSV_PATH} (TradingView export) ...")
         df_raw = load_data_from_csv(CSV_PATH)
+    elif DATA_SOURCE == "nse":
+        print(f"Loading {TICKER} via NSE historical API ...")
+        df_raw = load_data_from_nse(TICKER, START_DATE)
     elif DATA_SOURCE == "tv":
         print(f"Loading {TICKER} via tvDatafeed ...")
         df_raw = load_data_from_tv(TICKER)
@@ -458,7 +536,8 @@ if __name__ == "__main__":
     print(f"Loaded {len(df_raw)} bars: {df_raw.index[0].date()} -> {df_raw.index[-1].date()}")
 
     results = run_optimization(df_raw, ENTRY_GRID, EXIT_GRID)
-    results = results.sort_values(["profit_factor", "win_rate"], ascending=False)
+    # Primary objective: highest WIN RATE (profit_factor is the tie-breaker).
+    results = results.sort_values(["win_rate", "profit_factor"], ascending=False)
     results.to_csv("optimization_results.csv", index=False)
     print(f"\nFull grid: {len(results)} combos tested -> saved to optimization_results.csv")
 
@@ -492,7 +571,7 @@ if __name__ == "__main__":
         print(qualifying[display_cols].head(20).to_string(index=False))
 
         best = qualifying.iloc[0].to_dict()
-        print(f"\nTop combo (by profit factor): {best}")
+        print(f"\nTop combo (by win rate): {best}")
         walk_forward_check(df_raw, best, TRAIN_FRACTION)
     else:
         print("=" * 120)

@@ -83,11 +83,11 @@
     "GODREJCP": {
         "exchange": "NSE",
         "name": "Godrej Consumer Products",
-        "tp": 0.29,
-        "sl": 0.24,
-        "trail_act": 0.17,
-        "trail_buf": 0.09,
-        "probability": 0.82
+        "tp": 0.23,
+        "sl": 0.30,
+        "trail_act": 0.19,
+        "trail_buf": 0.16,
+        "probability": 0.90
     },
     "SCHNEIDER": {
         "exchange": "NSE",
@@ -425,8 +425,8 @@
         "name": "Garden Reach Shipbuilders & Engineers Ltd",
         "tp": 0.19,
         "sl": 0.26,
-        "trail_act": 0.12,
-        "trail_buf": 0.07,
+        "trail_act": 0.14,
+        "trail_buf": 0.11,
         "probability": 0.85,
         "yf_ticker": "GRSE.NS"
     },

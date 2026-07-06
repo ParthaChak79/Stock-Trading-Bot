@@ -1,0 +1,581 @@
+{
+    "_comment": "Consensus estimates for the earnings-surprise feature. Keyed by STOCKS ticker -> fiscal quarter -> metrics. revenue & net_profit are in Rs crore; eps is Rs per share. Keys starting with '_' are ignored. Period map: Q1FY27=Apr-Jun 2026, Q2FY27=Jul-Sep 2026, Q3FY27=Oct-Dec 2026, Q4FY27=Jan-Mar 2027. Values are analyst-consensus MEANS pulled from tapetide get_forecasts (quarterly 'estimates') on 2026-07. Refresh periodically from a Claude session; the standalone bot cannot call MCP. Stocks with no quarterly consensus (only annual) are omitted and will fall through to the 'manual review' alert.",
+    "BRITANNIA": {
+        "Q1FY27": {
+            "revenue": 5018.5,
+            "net_profit": 619.7,
+            "eps": 24.53
+        },
+        "Q2FY27": {
+            "revenue": 5384.2,
+            "net_profit": 732.3,
+            "eps": 28.48
+        },
+        "Q3FY27": {
+            "revenue": 5348.2,
+            "net_profit": 734.8,
+            "eps": 28.89
+        },
+        "Q4FY27": {
+            "revenue": 5369.9,
+            "net_profit": 696.0,
+            "eps": 30.35
+        }
+    },
+    "APOLLOHOSP": {
+        "Q1FY27": {
+            "revenue": 6888.6,
+            "net_profit": 567.2,
+            "eps": 38.01
+        },
+        "Q2FY27": {
+            "revenue": 7311.0,
+            "net_profit": 611.0,
+            "eps": 38.28
+        },
+        "Q3FY27": {
+            "revenue": 7574.8,
+            "net_profit": 666.7,
+            "eps": 46.00
+        },
+        "Q4FY27": {
+            "revenue": 7833.0,
+            "net_profit": 687.9,
+            "eps": 44.05
+        }
+    },
+    "BHARTIARTL": {
+        "Q1FY27": {
+            "revenue": 57247.2,
+            "net_profit": 7998.0,
+            "eps": 13.14
+        },
+        "Q2FY27": {
+            "revenue": 60265.6,
+            "net_profit": 8503.0,
+            "eps": 15.09
+        },
+        "Q3FY27": {
+            "revenue": 62942.5,
+            "net_profit": 9232.7,
+            "eps": 16.73
+        },
+        "Q4FY27": {
+            "revenue": 64843.4,
+            "net_profit": 10594.3,
+            "eps": 18.56
+        }
+    },
+    "PIDILITIND": {
+        "Q1FY27": {
+            "revenue": 4407.7,
+            "net_profit": 802.0,
+            "eps": 7.01
+        },
+        "Q2FY27": {
+            "revenue": 4259.3,
+            "eps": 6.31
+        },
+        "Q3FY27": {
+            "revenue": 4342.7,
+            "eps": 6.61
+        },
+        "Q4FY27": {
+            "revenue": 4200.2,
+            "eps": 6.15
+        }
+    },
+    "TVSMOTOR": {
+        "Q1FY27": {
+            "revenue": 11704.1,
+            "net_profit": 879.2,
+            "eps": 18.50
+        },
+        "Q2FY27": {
+            "revenue": 13564.9,
+            "net_profit": 1071.7,
+            "eps": 22.60
+        },
+        "Q3FY27": {
+            "revenue": 14129.3,
+            "net_profit": 1173.0,
+            "eps": 24.70
+        },
+        "Q4FY27": {
+            "revenue": 14477.0,
+            "net_profit": 1224.3,
+            "eps": 25.80
+        }
+    },
+    "BEL": {
+        "Q1FY27": {
+            "revenue": 4991.1,
+            "net_profit": 842.7,
+            "eps": 1.21
+        },
+        "Q2FY27": {
+            "revenue": 6542.0,
+            "net_profit": 1279.2,
+            "eps": 1.77
+        },
+        "Q3FY27": {
+            "revenue": 7473.2,
+            "net_profit": 1532.7,
+            "eps": 2.39
+        },
+        "Q4FY27": {
+            "revenue": 12124.1,
+            "net_profit": 2827.7,
+            "eps": 3.68
+        }
+    },
+    "GODREJCP": {
+        "Q1FY27": {
+            "revenue": 4131.8,
+            "net_profit": 524.2,
+            "eps": 5.21
+        },
+        "Q2FY27": {
+            "revenue": 4287.4,
+            "eps": 5.96
+        },
+        "Q3FY27": {
+            "revenue": 4287.4,
+            "eps": 6.07
+        },
+        "Q4FY27": {
+            "revenue": 4401.1,
+            "eps": 6.54
+        }
+    },
+    "SCHNEIDER": {
+        "Q1FY27": {
+            "revenue": 861.5,
+            "eps": 3.11
+        },
+        "Q2FY27": {
+            "revenue": 873.1,
+            "eps": 3.26
+        },
+        "Q3FY27": {
+            "revenue": 1106.8,
+            "eps": 5.11
+        },
+        "Q4FY27": {
+            "eps": 7.01
+        }
+    },
+    "FORTIS": {
+        "Q1FY27": {
+            "revenue": 2564.7,
+            "eps": 3.95
+        },
+        "Q2FY27": {
+            "revenue": 2619.4,
+            "eps": 4.52
+        },
+        "Q3FY27": {
+            "revenue": 2551.0,
+            "eps": 4.04
+        },
+        "Q4FY27": {
+            "revenue": 2683.1,
+            "eps": 4.64
+        }
+    },
+    "MAXHEALTH": {
+        "Q1FY27": {
+            "revenue": 2809.5,
+            "eps": 4.21
+        },
+        "Q2FY27": {
+            "revenue": 3013.1,
+            "eps": 4.88
+        },
+        "Q3FY27": {
+            "revenue": 2936.1,
+            "eps": 4.51
+        },
+        "Q4FY27": {
+            "revenue": 3047.9,
+            "eps": 5.00
+        }
+    },
+    "LT": {
+        "Q1FY27": {
+            "revenue": 69461.7,
+            "eps": 24.20
+        },
+        "Q2FY27": {
+            "revenue": 74606.6,
+            "eps": 27.04
+        }
+    },
+    "HAL": {
+        "Q1FY27": {
+            "revenue": 5316.4,
+            "net_profit": 1451.6,
+            "eps": 22.19
+        },
+        "Q2FY27": {
+            "revenue": 7215.1,
+            "net_profit": 1515.8,
+            "eps": 25.01
+        },
+        "Q3FY27": {
+            "revenue": 8354.3,
+            "net_profit": 1651.9,
+            "eps": 27.63
+        },
+        "Q4FY27": {
+            "revenue": 17088.1,
+            "net_profit": 4070.7,
+            "eps": 65.21
+        }
+    },
+    "HDFCBANK": {
+        "Q1FY27": {
+            "net_profit": 19056.4,
+            "eps": 12.09
+        },
+        "Q2FY27": {
+            "net_profit": 20965.3,
+            "eps": 12.04
+        },
+        "Q3FY27": {
+            "net_profit": 23077.2,
+            "eps": 13.19
+        },
+        "Q4FY27": {
+            "net_profit": 21919.9,
+            "eps": 14.14
+        }
+    },
+    "ICICIBANK": {
+        "Q1FY27": {
+            "net_profit": 13013.7,
+            "eps": 18.91
+        },
+        "Q2FY27": {
+            "net_profit": 13436.4,
+            "eps": 18.34
+        },
+        "Q3FY27": {
+            "net_profit": 13897.0,
+            "eps": 19.00
+        },
+        "Q4FY27": {
+            "net_profit": 14829.8,
+            "eps": 20.23
+        }
+    },
+    "DIXON": {
+        "Q1FY27": {
+            "revenue": 13052.6,
+            "net_profit": 234.6,
+            "eps": 36.83
+        },
+        "Q2FY27": {
+            "revenue": 15646.9,
+            "net_profit": 239.3,
+            "eps": 40.07
+        },
+        "Q3FY27": {
+            "revenue": 15364.2,
+            "net_profit": 289.4,
+            "eps": 39.94
+        },
+        "Q4FY27": {
+            "revenue": 19111.8,
+            "net_profit": 376.2,
+            "eps": 50.56
+        }
+    },
+    "BAJAJ_AUTO": {
+        "Q1FY27": {
+            "revenue": 15415.6,
+            "eps": 88.51
+        },
+        "Q2FY27": {
+            "revenue": 18088.3,
+            "eps": 114.35
+        },
+        "Q3FY27": {
+            "revenue": 17254.0,
+            "eps": 102.35
+        },
+        "Q4FY27": {
+            "revenue": 18496.1,
+            "eps": 110.73
+        }
+    },
+    "ONGC": {
+        "Q1FY27": {
+            "eps": 9.30
+        },
+        "Q2FY27": {
+            "eps": 9.41
+        },
+        "Q3FY27": {
+            "eps": 9.21
+        }
+    },
+    "POLYCAB": {
+        "Q1FY27": {
+            "revenue": 8019.7,
+            "net_profit": 738.5,
+            "eps": 48.47
+        },
+        "Q2FY27": {
+            "revenue": 8426.1,
+            "net_profit": 801.6,
+            "eps": 51.97
+        },
+        "Q3FY27": {
+            "revenue": 8708.8,
+            "net_profit": 756.1,
+            "eps": 50.38
+        },
+        "Q4FY27": {
+            "revenue": 10205.4,
+            "net_profit": 904.2,
+            "eps": 59.51
+        }
+    },
+    "CDSL": {
+        "Q1FY27": {
+            "revenue": 303.2,
+            "net_profit": 118.2
+        },
+        "Q2FY27": {
+            "revenue": 340.3,
+            "net_profit": 139.8
+        },
+        "Q3FY27": {
+            "revenue": 340.0,
+            "net_profit": 134.0
+        },
+        "Q4FY27": {
+            "revenue": 297.9,
+            "net_profit": 116.3
+        }
+    },
+    "KAYNES": {
+        "Q1FY27": {
+            "revenue": 846.9,
+            "net_profit": 64.3,
+            "eps": 9.60
+        },
+        "Q2FY27": {
+            "revenue": 1141.1,
+            "net_profit": 110.8,
+            "eps": 16.50
+        },
+        "Q3FY27": {
+            "revenue": 1051.6,
+            "net_profit": 97.3,
+            "eps": 14.50
+        },
+        "Q4FY27": {
+            "revenue": 1621.6,
+            "net_profit": 182.0,
+            "eps": 27.20
+        }
+    },
+    "KEI": {
+        "Q1FY27": {
+            "revenue": 3295.0,
+            "net_profit": 258.3,
+            "eps": 26.19
+        },
+        "Q2FY27": {
+            "revenue": 3518.4,
+            "eps": 26.14
+        },
+        "Q3FY27": {
+            "revenue": 3587.6,
+            "eps": 27.66
+        },
+        "Q4FY27": {
+            "revenue": 4193.4,
+            "eps": 32.33
+        }
+    },
+    "AJANTPHARM": {
+        "Q1FY27": {
+            "revenue": 1572.6,
+            "net_profit": 321.8,
+            "eps": 25.10
+        },
+        "Q2FY27": {
+            "revenue": 1608.7,
+            "net_profit": 330.9,
+            "eps": 25.80
+        },
+        "Q3FY27": {
+            "revenue": 1576.6,
+            "net_profit": 287.3,
+            "eps": 22.40
+        },
+        "Q4FY27": {
+            "revenue": 1507.8,
+            "net_profit": 226.4,
+            "eps": 17.70
+        }
+    },
+    "LUPIN": {
+        "Q1FY27": {
+            "revenue": 7909.3,
+            "net_profit": 1596.7,
+            "eps": 28.93
+        },
+        "Q2FY27": {
+            "revenue": 7840.1,
+            "net_profit": 1250.0,
+            "eps": 27.02
+        },
+        "Q3FY27": {
+            "revenue": 7538.3,
+            "net_profit": 874.4,
+            "eps": 24.72
+        },
+        "Q4FY27": {
+            "revenue": 7500.9,
+            "net_profit": 753.9,
+            "eps": 23.19
+        }
+    },
+    "RRKABEL": {
+        "Q1FY27": {
+            "revenue": 2767.4,
+            "net_profit": 139.5,
+            "eps": 12.30
+        },
+        "Q2FY27": {
+            "revenue": 2851.2,
+            "net_profit": 172.2,
+            "eps": 15.20
+        },
+        "Q3FY27": {
+            "revenue": 3115.3,
+            "net_profit": 184.6,
+            "eps": 16.30
+        },
+        "Q4FY27": {
+            "revenue": 3614.8,
+            "net_profit": 207.5,
+            "eps": 18.40
+        }
+    },
+    "NH": {
+        "Q1FY27": {
+            "revenue": 2405.0,
+            "net_profit": 261.5,
+            "eps": 12.80
+        },
+        "Q2FY27": {
+            "revenue": 2524.1,
+            "net_profit": 285.5,
+            "eps": 14.00
+        },
+        "Q3FY27": {
+            "revenue": 2590.7,
+            "net_profit": 284.7,
+            "eps": 13.90
+        },
+        "Q4FY27": {
+            "revenue": 2682.0,
+            "net_profit": 303.3,
+            "eps": 14.80
+        }
+    },
+    "NEULANDLAB": {
+        "Q1FY27": {
+            "revenue": 504.1,
+            "eps": 60.52
+        },
+        "Q2FY27": {
+            "revenue": 623.5,
+            "eps": 95.57
+        },
+        "Q3FY27": {
+            "revenue": 588.9,
+            "eps": 82.36
+        },
+        "Q4FY27": {
+            "revenue": 740.2,
+            "eps": 116.16
+        }
+    },
+    "SHAILY": {
+        "Q1FY27": {
+            "revenue": 370.0,
+            "net_profit": 74.9,
+            "eps": 16.23
+        },
+        "Q2FY27": {
+            "revenue": 397.8,
+            "net_profit": 84.0,
+            "eps": 18.20
+        },
+        "Q3FY27": {
+            "revenue": 413.3,
+            "net_profit": 89.0,
+            "eps": 19.30
+        }
+    },
+    "COALINDIA": {
+        "Q1FY27": {
+            "eps": 12.01
+        },
+        "Q2FY27": {
+            "eps": 11.67
+        },
+        "Q3FY27": {
+            "eps": 12.47
+        },
+        "Q4FY27": {
+            "eps": 18.78
+        }
+    },
+    "SBIN": {
+        "Q1FY27": {
+            "net_profit": 19316.1,
+            "eps": 18.32
+        },
+        "Q2FY27": {
+            "net_profit": 18850.8,
+            "eps": 15.89
+        },
+        "Q3FY27": {
+            "net_profit": 23277.3,
+            "eps": 18.03
+        },
+        "Q4FY27": {
+            "net_profit": 20396.7,
+            "eps": 19.40
+        }
+    },
+    "DIVISLAB": {
+        "Q1FY27": {
+            "revenue": 2794.4,
+            "net_profit": 610.8,
+            "eps": 24.03
+        },
+        "Q2FY27": {
+            "revenue": 3025.6,
+            "net_profit": 702.9,
+            "eps": 29.95
+        },
+        "Q3FY27": {
+            "revenue": 2931.6,
+            "net_profit": 671.4,
+            "eps": 26.02
+        },
+        "Q4FY27": {
+            "revenue": 3155.5,
+            "net_profit": 736.2,
+            "eps": 30.04
+        }
+    }
+}
