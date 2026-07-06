@@ -296,7 +296,10 @@ def load_stocks_config():
         "GRSE": {"exchange": "NSE", "name": "Garden Reach Shipbuilders & Engineers Ltd", "tp": 0.19, "sl": 0.26, "trail_act": 0.14, "trail_buf": 0.11, "probability": 0.85, "yf_ticker": "GRSE.NS"},
         "SHAILY": {"exchange": "NSE", "name": "Shaily Engineering Plastics Limited", "tp": 0.16, "sl": 0.25, "trail_act": 0.10, "trail_buf": 0.07, "probability": 0.93, "yf_ticker": "SHAILY.NS"},
         "COALINDIA": {"exchange": "NSE", "name": "Coal India Ltd", "tp": 0.16, "sl": 0.20, "trail_act": 0.10, "trail_buf": 0.07, "probability": 1, "yf_ticker": "COALINDIA.NS"},
-        "MCX": {"exchange": "NSE", "name": "Multi Commodity Exchange of India Limited", "tp": 0.18, "sl": 0.22, "trail_act": 0.06, "trail_buf": 0.04, "yf_ticker": "MCX.NS"}
+        "MCX": {"exchange": "NSE", "name": "Multi Commodity Exchange of India Limited", "tp": 0.18, "sl": 0.22, "trail_act": 0.06, "trail_buf": 0.04, "yf_ticker": "MCX.NS"},
+        "MARUTI": {"exchange": "NSE", "name": "Maruti Suzuki India Limited", "tp": 0.24, "sl": 0.27, "trail_act": 0.13, "trail_buf": 0.11, "probability": 0.84, "yf_ticker": "MARUTI.NS"},
+        "ASIANPAINT": {"exchange": "NSE", "name": "Asian Paints Ltd", "tp": 0.25, "sl": 0.28, "trail_act": 0.13, "trail_buf": 0.095, "probability": 0.9, "yf_ticker": "ASIANPAINT.NS"},
+        "DRREDDY": {"exchange": "NSE", "name": "Dr Reddys Laboratories Ltd", "tp": 0.23, "sl": 0.29, "trail_act": 0.13, "trail_buf": 0.10, "probability": 0.84, "yf_ticker": "DRREDDY.NS"}
     }
 
 STOCKS = load_stocks_config()

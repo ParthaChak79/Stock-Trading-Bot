@@ -458,5 +458,35 @@
         "trail_act": 0.06,
         "trail_buf": 0.04,
         "yf_ticker": "MCX.NS"
+    },
+    "MARUTI": {
+        "exchange": "NSE",
+        "name": "Maruti Suzuki India Limited",
+        "tp": 0.24,
+        "sl": 0.27,
+        "trail_act": 0.13,
+        "trail_buf": 0.11,
+        "probability": 0.84,
+        "yf_ticker": "MARUTI.NS"
+    },
+    "ASIANPAINT": {
+        "exchange": "NSE",
+        "name": "Asian Paints Ltd",
+        "tp": 0.25,
+        "sl": 0.28,
+        "trail_act": 0.13,
+        "trail_buf": 0.095,
+        "probability": 0.9,
+        "yf_ticker": "ASIANPAINT.NS"
+    },
+    "DRREDDY": {
+        "exchange": "NSE",
+        "name": "Dr Reddys Laboratories Ltd",
+        "tp": 0.23,
+        "sl": 0.29,
+        "trail_act": 0.13,
+        "trail_buf": 0.10,
+        "probability": 0.84,
+        "yf_ticker": "DRREDDY.NS"
     }
 }
