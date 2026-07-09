@@ -12,21 +12,12 @@ from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 from tvDatafeed import TvDatafeed, Interval
 from twilio.rest import Client
-import io
-# pdfplumber is only needed for the earnings-surprise feature. Import it
-# defensively so a missing dependency degrades that feature to "manual review"
-# instead of breaking the whole bot at startup.
-try:
-    import pdfplumber
-except ImportError:
-    pdfplumber = None
 
 # Setup base directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATE_FILE = os.path.join(BASE_DIR, "portfolio_state.json")
 SEEN_NEWS_FILE = os.path.join(BASE_DIR, "seen_news.json")
 SEEN_EARNINGS_FILE = os.path.join(BASE_DIR, "seen_earnings.json")
-EARNINGS_ESTIMATES_FILE = os.path.join(BASE_DIR, "earnings_estimates.json")
 ENV_FILE = os.path.join(BASE_DIR, ".env")
 
 def clean_env_var(value):
@@ -207,31 +198,28 @@ def is_market_closed(date_obj):
 # ----------------------------------------------------------------------------
 # Earnings-Surprise Alert Configuration
 # ----------------------------------------------------------------------------
-# NSE corporate-announcement "desc" (subject) values that indicate a results
-# filing. Matched case-insensitively as substrings against the announcement's
-# subject + attachment text. Tune this list to widen/narrow what we pick up.
-EARNINGS_ANNOUNCEMENT_KEYWORDS = [
-    "Financial Results",
-    "Financial Result",
-    "Board Meeting Outcome",
-    "Outcome of Board Meeting",
-    "Outcome of the Board Meeting",
-]
+# Sourced from TradingView's own scanner (scanner.tradingview.com) rather than
+# parsing NSE results-filing PDFs — the PDF pipeline was unreliable (results
+# tables vary in layout enough that _extract_metric frequently came up empty,
+# producing "could not parse the filing PDF" alerts). TradingView's scanner
+# gives the same actual/estimate/surprise figures shown on its own Earnings &
+# Revenue card, verified field-by-field against a live example (LUPIN) before
+# switching over. See fetch_earnings_data() below.
 
 # A metric is a "Beat" if the actual is more than this fraction above the
 # estimate, a "Miss" if more than this fraction below, else "In-line".
 EARNINGS_SURPRISE_THRESHOLD = 0.05  # 5%
 
-# On startup / first run, only alert on filings this recent so we don't spam
-# the whole historical announcement feed. Older filings are marked as seen
-# (so they never re-alert) but do not generate an alert.
+# Only alert on releases this recent so we don't spam old data the first time
+# this runs (or after seen_earnings.json is reset). Older releases are marked
+# as seen (so they never alert) but silently, without a Telegram message.
 EARNINGS_LOOKBACK_DAYS = 2
 
-# NSE endpoints + browser-like headers. The corporate-announcements API rejects
-# requests that don't carry cookies from a prior page load, so we prime a
-# session against the homepage first (see get_nse_session / fetch_nse_announcements).
+# NSE endpoints + browser-like headers (also used by the pre-market brief's
+# FII/DII-flow and breadth lookups). NSE's JSON APIs reject requests that
+# don't carry cookies from a prior page load, so we prime a session against
+# the homepage first (see get_nse_session).
 NSE_BASE_URL = "https://www.nseindia.com"
-NSE_ANNOUNCEMENTS_URL = "https://www.nseindia.com/api/corporate-announcements?index=equities&symbol={symbol}"
 NSE_HEADERS = {
     "User-Agent": ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
                    "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -306,7 +294,8 @@ def load_stocks_config():
         "MARUTI": {"exchange": "NSE", "name": "Maruti Suzuki India Limited", "tp": 0.24, "sl": 0.27, "trail_act": 0.13, "trail_buf": 0.11, "probability": 0.84, "yf_ticker": "MARUTI.NS"},
         "ASIANPAINT": {"exchange": "NSE", "name": "Asian Paints Ltd", "tp": 0.25, "sl": 0.28, "trail_act": 0.13, "trail_buf": 0.095, "probability": 0.9, "yf_ticker": "ASIANPAINT.NS"},
         "DRREDDY": {"exchange": "NSE", "name": "Dr Reddys Laboratories Ltd", "tp": 0.23, "sl": 0.29, "trail_act": 0.13, "trail_buf": 0.10, "probability": 0.84, "yf_ticker": "DRREDDY.NS"},
-        "EICHERMOT": {"exchange": "NSE", "name": "Eicher Motors Limited", "tp": 0.20, "sl": 0.28, "trail_act": 0.16, "trail_buf": 0.13, "probability": 0.85, "yf_ticker": "EICHERMOT.NS"}
+        "EICHERMOT": {"exchange": "NSE", "name": "Eicher Motors Limited", "tp": 0.20, "sl": 0.28, "trail_act": 0.16, "trail_buf": 0.13, "probability": 0.85, "yf_ticker": "EICHERMOT.NS"},
+        "TITAN": {"exchange": "NSE", "name": "Titan Company Limited", "tp": 0.22, "sl": 0.30, "trail_act": 0.12, "trail_buf": 0.11, "probability": 0.89, "yf_ticker": "TITAN.NS"}
     }
 
 STOCKS = load_stocks_config()
@@ -352,46 +341,24 @@ def save_seen_news(seen_links, seen_titles):
         print(f"Error saving seen_news: {e}")
 
 def load_seen_earnings():
-    """Load the set of already-processed earnings announcement IDs."""
-    seen = set()
+    """Load {ticker: last_alerted_release_epoch} so we only alert once per
+    reported quarter."""
     if os.path.exists(SEEN_EARNINGS_FILE):
         try:
             with open(SEEN_EARNINGS_FILE, "r") as f:
                 data = json.load(f)
                 if isinstance(data, dict):
-                    seen = set(data.get("processed", []))
-                elif isinstance(data, list):
-                    seen = set(data)
+                    return data
         except Exception as e:
             print(f"Error loading seen_earnings: {e}")
-    return seen
+    return {}
 
 def save_seen_earnings(seen):
     try:
         with open(SEEN_EARNINGS_FILE, "w") as f:
-            json.dump({"processed": list(seen)}, f, indent=4)
+            json.dump(seen, f, indent=4)
     except Exception as e:
         print(f"Error saving seen_earnings: {e}")
-
-def load_earnings_estimates():
-    """Load analyst consensus estimates keyed by ticker -> quarter -> metrics.
-
-    Schema (see earnings_estimates.json):
-        {
-          "BRITANNIA": {
-            "Q1FY27": {"revenue": 4600, "net_profit": 560, "eps": 23.2}
-          }
-        }
-    Revenue / net_profit are in ₹ crore; eps is ₹ per share. Keys starting
-    with "_" (e.g. "_comment") are treated as documentation and ignored.
-    """
-    if os.path.exists(EARNINGS_ESTIMATES_FILE):
-        try:
-            with open(EARNINGS_ESTIMATES_FILE, "r") as f:
-                return json.load(f)
-        except Exception as e:
-            print(f"Error loading earnings_estimates.json: {e}")
-    return {}
 
 CLOSED_TRADES_FILE = os.path.join(BASE_DIR, "closed_trades.json")
 
@@ -838,10 +805,11 @@ def check_news_stream():
 # Earnings-Surprise Alerts
 # ============================================================================
 # Standalone feature (independent of check_news_stream / get_news / analyze_stocks):
-# polls NSE corporate-announcements for results filings by the stocks in STOCKS,
-# extracts Revenue / Net Profit / EPS from the filing PDF, compares them to
-# locally-maintained consensus estimates (earnings_estimates.json), and sends a
-# numeric Beat/Miss/In-line surprise summary via Telegram/WhatsApp.
+# queries TradingView's scanner for each stock's latest reported quarter and
+# alerts with the actual vs. estimate vs. surprise% for EPS and Revenue —
+# TradingView's own numbers, the same ones shown on its Earnings & Revenue
+# card (verified field-by-field against a live example before switching to
+# this from the old NSE-PDF-parsing approach).
 
 _nse_session = None
 
@@ -876,56 +844,21 @@ def nse_symbol_for(ticker, config):
     if yf_ticker:
         if yf_ticker.endswith(".NS"):
             return yf_ticker[:-3]
-        return None  # index / non-NSE instrument — no corporate filings
+        return None  # index / non-NSE instrument — no earnings releases
     return ticker
 
-def fetch_nse_announcements(symbol):
-    """Fetch corporate announcements for a symbol. Returns a list, or None on
-    a blocked/rate-limited/errored request (caller should skip this cycle)."""
-    session = get_nse_session()
-    url = NSE_ANNOUNCEMENTS_URL.format(symbol=requests.utils.quote(symbol))
-    for attempt in range(2):
-        try:
-            resp = session.get(url, timeout=20)
-            if resp.status_code in (401, 403):
-                # Cookies likely expired — re-prime once and retry.
-                print(f"[Earnings] NSE returned {resp.status_code} for {symbol}; refreshing cookies.")
-                _prime_nse_cookies(session)
-                continue
-            resp.raise_for_status()
-            data = resp.json()
-            if isinstance(data, list):
-                return data
-            # Some responses wrap the rows in a dict.
-            if isinstance(data, dict):
-                return data.get("data") or data.get("rows") or []
-            return []
-        except Exception as e:
-            print(f"[Earnings] Error fetching NSE announcements for {symbol}: {e}")
-    return None
+def derive_quarter_label(release_date):
+    """Best-effort mapping of a release date to the fiscal quarter it reports.
 
-def _parse_nse_datetime(value):
-    """Parse the assorted date formats NSE uses in announcement rows."""
-    if not value:
-        return None
-    value = str(value).strip()
-    for fmt in ("%Y-%m-%d %H:%M:%S", "%d-%b-%Y %H:%M:%S", "%d-%b-%Y", "%Y-%m-%d"):
-        try:
-            return datetime.strptime(value, fmt)
-        except ValueError:
-            continue
-    return None
-
-def derive_quarter_label(filing_date):
-    """Best-effort mapping of a filing date to the fiscal quarter it reports.
-
-    Indian FY runs Apr–Mar. Results are filed roughly one quarter in arrears:
-      Jul–Sep -> Q1, Oct–Dec -> Q2, Jan–Mar -> Q3, Apr–Jun -> Q4 (annual).
-    FY label is the year the fiscal year ends (e.g. Q1FY27 = Apr–Jun 2026).
+    Indian FY runs Apr–Mar. Results are released roughly one quarter in
+    arrears: Jul–Sep -> Q1, Oct–Dec -> Q2, Jan–Mar -> Q3, Apr–Jun -> Q4
+    (annual). FY label is the year the fiscal year ends (e.g. Q1FY27 =
+    Apr–Jun 2026 results, released Jul–Sep 2026). Display-only — TradingView
+    already matches actuals to the correct estimate period itself.
     """
-    if filing_date is None:
+    if release_date is None:
         return None
-    m, y = filing_date.month, filing_date.year
+    m, y = release_date.month, release_date.year
     if 7 <= m <= 9:
         q, fy_end = 1, y + 1
     elif 10 <= m <= 12:
@@ -936,116 +869,49 @@ def derive_quarter_label(filing_date):
         q, fy_end = 4, y
     return f"Q{q}FY{fy_end % 100:02d}"
 
-def get_consensus_estimate(ticker, quarter_label, estimates):
-    """Return the estimate dict for a ticker/quarter, or None if unavailable."""
-    tmap = estimates.get(ticker)
-    if not isinstance(tmap, dict):
-        return None
-    qmap = {k: v for k, v in tmap.items() if not k.startswith("_")}
-    if quarter_label and quarter_label in qmap:
-        return qmap[quarter_label]
-    # If the file holds exactly one quarter for this stock, use it regardless —
-    # the derived quarter label is only a heuristic.
-    if len(qmap) == 1:
-        return next(iter(qmap.values()))
-    return None
+TV_SCAN_URL = "https://scanner.tradingview.com/india/scan"
+TV_HEADERS = {
+    "User-Agent": ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                   "AppleWebKit/537.36 (KHTML, like Gecko) "
+                   "Chrome/122.0.0.0 Safari/537.36"),
+    "Content-Type": "application/json",
+    "Origin": "https://www.tradingview.com",
+    "Referer": "https://www.tradingview.com/",
+}
+# Field names verified against scanner.tradingview.com/india/metainfo, and
+# cross-checked against a live example (LUPIN) against TradingView's own
+# Earnings & Revenue card before relying on them.
+EARNINGS_COLUMNS = [
+    "name", "earnings_release_date",
+    "earnings_per_share_diluted_fq", "earnings_per_share_forecast_fq",
+    "total_revenue_fq", "revenue_forecast_fq",
+]
 
-def _detect_unit_factor(text):
-    """Return the multiplier to convert the PDF's stated units into ₹ crore."""
-    head = text[:3000].lower()
-    if "crore" in head or " cr" in head or "in cr" in head:
-        return 1.0
-    if "lakh" in head or "lac" in head:
-        return 0.01   # 1 lakh = 0.01 crore
-    if "million" in head or " mn" in head:
-        return 0.1    # 1 million = 0.1 crore
-    if "billion" in head or " bn" in head:
-        return 100.0
-    return 1.0  # default: assume crore (NSE large/mid caps usually file in crore)
-
-def _extract_metric(text, labels, prefer_decimal=False):
-    """Find the first numeric value following any of `labels` in `text`.
-
-    NSE results tables list several columns (current quarter, prior quarter,
-    year-ago quarter, ...); the first number after the row label is the current
-    period. Values in parentheses are treated as negative. When prefer_decimal
-    is set (EPS), a number containing a decimal point is preferred so we skip
-    face-value noise like "equity share of Rs. 1 each".
-    """
-    low = text.lower()
-    num_re = re.compile(r"(\()?\s*(-?[\d,]+(?:\.\d+)?)\s*(\)?)")
-    for label in labels:
-        idx = low.find(label.lower())
-        if idx == -1:
-            continue
-        window = text[idx + len(label): idx + len(label) + 300]
-        fallback = None
-        for m in num_re.finditer(window):
-            raw = m.group(2).replace(",", "")
-            try:
-                val = float(raw)
-            except ValueError:
-                continue
-            if m.group(1) and m.group(3):  # wrapped in ( ) -> negative
-                val = -abs(val)
-            if prefer_decimal and "." not in m.group(2):
-                if fallback is None:
-                    fallback = val
-                continue
-            return val
-        if fallback is not None:
-            return fallback
-    return None
-
-def parse_results_pdf(pdf_url):
-    """Download and parse an NSE results PDF.
-
-    Returns {"revenue", "net_profit", "eps"} (revenue/net_profit in ₹ crore,
-    eps in ₹/share; any key may be None if not found), or None if the PDF can't
-    be downloaded / opened at all.
-    """
-    if pdfplumber is None:
-        print("[Earnings] pdfplumber not installed — cannot parse results PDF. "
-              "Run: pip install pdfplumber")
-        return None
-    session = get_nse_session()
-    try:
-        resp = session.get(pdf_url, timeout=30)
-        resp.raise_for_status()
-        text_parts = []
-        with pdfplumber.open(io.BytesIO(resp.content)) as pdf:
-            for page in pdf.pages:
-                page_text = page.extract_text() or ""
-                text_parts.append(page_text)
-        text = "\n".join(text_parts)
-    except Exception as e:
-        print(f"[Earnings] Failed to download/parse PDF {pdf_url}: {e}")
-        return None
-
-    if not text.strip():
-        print(f"[Earnings] No extractable text in PDF {pdf_url}")
-        return None
-
-    factor = _detect_unit_factor(text)
-    revenue = _extract_metric(text, [
-        "Revenue from operations", "Total income from operations",
-        "Total revenue from operations", "Total Income",
-    ])
-    net_profit = _extract_metric(text, [
-        "Net Profit/(Loss) for the period", "Net Profit / (Loss) for the period",
-        "Profit/(loss) for the period", "Profit for the period",
-        "Net Profit for the period", "Profit after tax", "Net Profit",
-    ])
-    eps = _extract_metric(text, [
-        "Diluted (Rs", "Basic (Rs", "Basic & Diluted", "Basic and Diluted",
-        "Basic EPS", "Earnings per share", "Earnings Per Share",
-    ], prefer_decimal=True)
-
-    return {
-        "revenue": revenue * factor if revenue is not None else None,
-        "net_profit": net_profit * factor if net_profit is not None else None,
-        "eps": eps,  # per-share value, not scaled
+def fetch_earnings_data(symbols):
+    """Query TradingView's scanner for earnings actual/estimate data for a
+    batch of NSE symbols in one request. Returns {symbol: {col: value}}, or
+    {} on failure."""
+    if not symbols:
+        return {}
+    body = {
+        "filter": [
+            {"left": "name", "operation": "in_range", "right": symbols},
+            {"left": "exchange", "operation": "equal", "right": "NSE"},
+        ],
+        "options": {"lang": "en"},
+        "markets": ["india"],
+        "symbols": {},
+        "columns": EARNINGS_COLUMNS,
+        "range": [0, len(symbols) + 10],
     }
+    try:
+        resp = requests.post(TV_SCAN_URL, headers=TV_HEADERS, json=body, timeout=30)
+        resp.raise_for_status()
+        data = resp.json()
+        return {row["d"][0]: dict(zip(EARNINGS_COLUMNS, row["d"])) for row in data.get("data", [])}
+    except Exception as e:
+        print(f"[Earnings] Error querying TradingView for earnings data: {e}")
+        return {}
 
 def _surprise(actual, estimate):
     """Return (surprise_pct, "Beat"/"Miss"/"In-line") or (None, None)."""
@@ -1085,121 +951,96 @@ def _overall_label(labels):
     return "In-line"
 
 def check_earnings_surprises():
-    """Poll NSE for new results filings by our stocks and alert on the surprise
-    vs consensus. Independent of the news/analysis functions; own schedule."""
+    """Check each tracked stock's latest reported quarter (via TradingView)
+    and alert once per new release. Independent of the news/analysis
+    functions; own schedule."""
     try:
         today = datetime.now(IST).date()
         if is_market_closed(today):
             print(f"[{datetime.now(IST).strftime('%Y-%m-%d %H:%M:%S')}] Market closed. Skipping earnings check.")
             return
 
-        print(f"\n[{datetime.now(IST).strftime('%Y-%m-%d %H:%M:%S')}] Checking for earnings-surprise filings...")
-        processed = load_seen_earnings()
-        estimates = load_earnings_estimates()
+        print(f"\n[{datetime.now(IST).strftime('%Y-%m-%d %H:%M:%S')}] Checking for earnings-surprise releases...")
+        seen = load_seen_earnings()
         changed = False
 
+        symbol_to_ticker = {}
         for ticker, config in STOCKS.items():
             symbol = nse_symbol_for(ticker, config)
-            if not symbol:
+            if symbol:
+                symbol_to_ticker[symbol] = ticker
+
+        tv_data = fetch_earnings_data(list(symbol_to_ticker.keys()))
+
+        for symbol, ticker in symbol_to_ticker.items():
+            row = tv_data.get(symbol)
+            if not row:
                 continue
 
-            announcements = fetch_nse_announcements(symbol)
-            if announcements is None:
-                # NSE blocked/errored for this symbol — skip it this cycle.
+            release_epoch = row.get("earnings_release_date")
+            if not release_epoch:
                 continue
+            if seen.get(ticker) == release_epoch:
+                continue  # already processed this exact release
 
-            for ann in announcements[:15]:
-                desc = (ann.get("desc") or ann.get("attchmntText") or "") + " " + (ann.get("attchmntText") or "")
-                if not any(kw.lower() in desc.lower() for kw in EARNINGS_ANNOUNCEMENT_KEYWORDS):
+            release_date = datetime.fromtimestamp(release_epoch, tz=timezone.utc).date()
+
+            # Only alert on releases this recent so we don't spam old data the
+            # first time this runs. Older releases are seeded as seen silently.
+            if (today - release_date).days <= EARNINGS_LOOKBACK_DAYS:
+                eps_actual = row.get("earnings_per_share_diluted_fq")
+                rev_actual = row.get("total_revenue_fq")
+
+                if eps_actual is None and rev_actual is None:
+                    # New release detected but TradingView hasn't populated the
+                    # actuals yet — don't mark seen, retry next cycle.
+                    print(f"[Earnings] {ticker}: release detected but no data yet; will retry.")
                     continue
 
-                pdf_url = ann.get("attchmntFile") or ""
-                ann_id = pdf_url or f"{symbol}|{ann.get('an_dt') or ann.get('sort_date')}"
-                if not ann_id or ann_id in processed:
-                    continue
-
-                filed_dt = _parse_nse_datetime(ann.get("an_dt") or ann.get("sort_date"))
-                filed_date = filed_dt.date() if filed_dt else today
-                filed_str = filed_dt.strftime("%d %b %Y, %H:%M") if filed_dt else "Unknown"
-
-                # Seed old filings as seen without alerting (avoids first-run spam).
-                if (today - filed_date).days > EARNINGS_LOOKBACK_DAYS:
-                    processed.add(ann_id)
-                    changed = True
-                    continue
-
-                print(f"[Earnings] New results filing for {ticker} ({symbol}) filed {filed_str}")
-
-                actuals = parse_results_pdf(pdf_url) if pdf_url.lower().endswith(".pdf") else None
-                quarter_label = derive_quarter_label(filed_dt)
-                est = get_consensus_estimate(ticker, quarter_label, estimates)
-
-                # If we can't parse the filing OR have no estimate, send the
-                # simpler "manual review needed" alert (with any parsed actuals).
-                if actuals is None or est is None:
-                    msg = _build_manual_review_alert(ticker, config, filed_str, quarter_label, actuals, est, pdf_url)
-                else:
-                    msg = _build_surprise_alert(ticker, config, filed_str, quarter_label, actuals, est, pdf_url)
+                print(f"[Earnings] New results release for {ticker} ({symbol}), {release_date}")
+                msg = _build_surprise_alert(ticker, STOCKS[ticker], release_date, row)
 
                 if send_telegram_message(msg):
-                    processed.add(ann_id)
-                    changed = True
                     print(f"[Earnings] Sent earnings alert for {ticker}")
                 else:
                     print(f"[Earnings] Failed to send earnings alert for {ticker}; will retry next cycle.")
+                    continue  # don't mark seen -> retry next cycle
 
-            time.sleep(1)  # be gentle with NSE between symbols
+            seen[ticker] = release_epoch
+            changed = True
 
         if changed:
-            save_seen_earnings(processed)
+            save_seen_earnings(seen)
     except Exception as e:
         # Never let this crash the scheduler loop.
         print(f"[Earnings] Unexpected error in check_earnings_surprises: {e}")
 
-def _build_surprise_alert(ticker, config, filed_str, quarter_label, actuals, est, pdf_url):
-    lines = _metric_lines_and_labels(actuals, est)
-    overall = _overall_label(lines["labels"])
+def _build_surprise_alert(ticker, config, release_date, row):
+    eps_actual = row.get("earnings_per_share_diluted_fq")
+    eps_est = row.get("earnings_per_share_forecast_fq")
+    eps_pct, eps_label = _surprise(eps_actual, eps_est)
+    eps_line = _metric_line("EPS", eps_actual, eps_est, is_eps=True)
+
+    # TradingView reports revenue in raw INR; display in crore like the rest
+    # of the bot's alerts (÷1e7).
+    rev_actual = row.get("total_revenue_fq")
+    rev_est = row.get("revenue_forecast_fq")
+    rev_actual_cr = rev_actual / 1e7 if rev_actual is not None else None
+    rev_est_cr = rev_est / 1e7 if rev_est is not None else None
+    rev_pct, rev_label = _surprise(rev_actual_cr, rev_est_cr)
+    rev_line = _metric_line("Revenue", rev_actual_cr, rev_est_cr)
+
+    overall = _overall_label([eps_label, rev_label])
     overall_emoji = {"Beat": "🟢🚀", "Miss": "🔴", "In-line": "🟡"}.get(overall, "🟡")
 
+    quarter_label = derive_quarter_label(release_date)
     q = f" ({quarter_label})" if quarter_label else ""
     msg = f"━━━━━━━━━━━━━━━━━━━━━━\n📊 <b>EARNINGS ALERT: {config['name']}</b>{q}\n━━━━━━━━━━━━━━━━━━━━━━\n"
-    msg += f"🗓️ Filed: {filed_str}\n\n"
-    msg += lines["revenue"] + "\n"
-    msg += lines["net_profit"] + "\n"
-    msg += lines["eps"] + "\n\n"
+    msg += f"🗓️ Reported: {release_date.strftime('%d %b %Y')}\n\n"
+    msg += rev_line + "\n"
+    msg += eps_line + "\n\n"
     if overall:
         msg += f"{overall_emoji} <b>Overall: {overall}</b>\n"
-    if pdf_url:
-        msg += f"<a href='{pdf_url}'>🔗 View Filing</a>\n"
-    msg += f"\n#{ticker} #NSE #Earnings"
-    return msg
-
-def _metric_lines_and_labels(actuals, est):
-    est = est or {}
-    rev_line = _metric_line("Revenue", actuals.get("revenue"), est.get("revenue"))
-    np_line = _metric_line("Net Profit", actuals.get("net_profit"), est.get("net_profit"))
-    eps_line = _metric_line("EPS", actuals.get("eps"), est.get("eps"), is_eps=True)
-    labels = [
-        _surprise(actuals.get("revenue"), est.get("revenue"))[1],
-        _surprise(actuals.get("net_profit"), est.get("net_profit"))[1],
-        _surprise(actuals.get("eps"), est.get("eps"))[1],
-    ]
-    return {"revenue": rev_line, "net_profit": np_line, "eps": eps_line, "labels": labels}
-
-def _build_manual_review_alert(ticker, config, filed_str, quarter_label, actuals, est, pdf_url):
-    q = f" ({quarter_label})" if quarter_label else ""
-    msg = f"━━━━━━━━━━━━━━━━━━━━━━\n📊 <b>EARNINGS ALERT: {config['name']}</b>{q}\n━━━━━━━━━━━━━━━━━━━━━━\n"
-    msg += f"🗓️ Filed: {filed_str}\n\n"
-    if actuals:
-        # We parsed something but couldn't compute a surprise (no estimate).
-        lines = _metric_lines_and_labels(actuals, est)
-        msg += lines["revenue"] + "\n"
-        msg += lines["net_profit"] + "\n"
-        msg += lines["eps"] + "\n\n"
-    reason = "estimate data unavailable" if actuals else "could not parse the filing PDF"
-    msg += f"⚠️ <b>Manual review needed</b> — could not compute surprise ({reason}).\n"
-    if pdf_url:
-        msg += f"<a href='{pdf_url}'>🔗 View Filing</a>\n"
     msg += f"\n#{ticker} #NSE #Earnings"
     return msg
 

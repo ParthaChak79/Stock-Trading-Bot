@@ -498,5 +498,15 @@
         "trail_buf": 0.13,
         "probability": 0.85,
         "yf_ticker": "EICHERMOT.NS"
+    },
+    "TITAN": {
+        "exchange": "NSE",
+        "name": "Titan Company Limited",
+        "tp": 0.22,
+        "sl": 0.30,
+        "trail_act": 0.12,
+        "trail_buf": 0.11,
+        "probability": 0.89,
+        "yf_ticker": "TITAN.NS"
     }
 }
