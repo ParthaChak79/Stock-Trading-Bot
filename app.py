@@ -1203,6 +1203,191 @@ def _build_manual_review_alert(ticker, config, filed_str, quarter_label, actuals
     msg += f"\n#{ticker} #NSE #Earnings"
     return msg
 
+# ============================================================================
+# Pre-Market Brief
+# ============================================================================
+# Global cues, commodities, FII/DII flows, VIX, and the prior session's close
+# + breadth, all from directly-callable sources (yfinance + NSE JSON APIs) so
+# this can run unattended on a schedule — no MCP/interactive tools involved.
+#
+# GIFT Nifty has no free structured API (checked yfinance, NSE's public
+# endpoints, and tapetide's MCP tools) — it's text-mined from Google News
+# headlines instead (see fetch_gift_nifty_setup). Best-effort: only used when
+# a fresh, on-topic headline actually contains a parseable points figure; we
+# omit the line rather than fabricate a number or show stale news.
+#
+# Breadth is Nifty-50-scoped (NSE has no public full-market breadth endpoint),
+# not full-market — labelled as such below so it isn't misread as the latter.
+
+GIFT_NIFTY_LOOKBACK_HOURS = 12
+GIFT_NIFTY_POINTS_RE = re.compile(
+    r'\b(up|down|higher|lower|gains?|falls?|jumps?|slips?|dips?|surges?|plunges?|advances?|declines?)\b'
+    r'.{0,20}?(\d+(?:\.\d+)?)\s*pts?\b',
+    re.IGNORECASE,
+)
+GIFT_NIFTY_POSITIVE_WORDS = {'up', 'higher', 'gain', 'jump', 'surge', 'advance'}
+GIFT_NIFTY_NEGATIVE_WORDS = {'down', 'lower', 'fall', 'slip', 'dip', 'plunge', 'decline'}
+
+def fetch_gift_nifty_setup():
+    """Best-effort GIFT Nifty pre-open signal, text-mined from recent Google
+    News headlines (no free structured API exists for GIFT Nifty). Returns an
+    HTML-formatted line, or None if nothing fresh/on-topic is found — we'd
+    rather omit the line than show a stale or fabricated number."""
+    url = "https://news.google.com/rss/search?q=gift+nifty&hl=en-IN&gl=IN&ceid=IN:en"
+    try:
+        feed = feedparser.parse(url)
+    except Exception as e:
+        print(f"[Pre-Market] Error fetching GIFT Nifty news: {e}")
+        return None
+
+    now_utc = datetime.now(timezone.utc)
+    fallback_entry = None
+
+    for entry in feed.entries[:15]:
+        title = entry.get('title', '')
+        if 'gift nifty' not in title.lower():
+            continue
+
+        pub = entry.get('published_parsed')
+        if not pub:
+            continue
+        pub_dt = datetime(*pub[:6], tzinfo=timezone.utc)
+        if (now_utc - pub_dt).total_seconds() > GIFT_NIFTY_LOOKBACK_HOURS * 3600:
+            continue
+
+        if fallback_entry is None:
+            fallback_entry = entry
+
+        match = GIFT_NIFTY_POINTS_RE.search(title)
+        if not match:
+            continue
+
+        direction_word = match.group(1).lower().rstrip('s')
+        if direction_word in GIFT_NIFTY_POSITIVE_WORDS:
+            sign, bias = '+', 'positive'
+        elif direction_word in GIFT_NIFTY_NEGATIVE_WORDS:
+            sign, bias = '-', 'negative'
+        else:
+            continue
+
+        points = float(match.group(2))
+        magnitude = "mildly " if points < 20 else ("sharply " if points >= 60 else "")
+        return f"🌐 <b>Setup:</b> GIFT Nifty {sign}{points:.0f} pts → {magnitude}{bias} open"
+
+    if fallback_entry is not None:
+        return f"🌐 <b>Setup:</b> {fallback_entry.title} <i>(no exact point move found)</i>"
+
+    return None
+
+GLOBAL_CUES_TICKERS = {
+    "Nikkei": "^N225",
+    "Hang Seng": "^HSI",
+    "Dow": "^DJI",
+    "Nasdaq": "^IXIC",
+}
+COMMODITY_TICKERS = {
+    "Crude": "CL=F",
+    "Gold": "GC=F",
+}
+USD_INR_TICKER = "INR=X"
+INDIA_VIX_TICKER = "^INDIAVIX"
+
+NSE_FII_DII_URL = "https://www.nseindia.com/api/fiidiiTradeReact"
+NSE_ALL_INDICES_URL = "https://www.nseindia.com/api/allIndices"
+FII_DII_HISTORY_FILE = os.path.join(BASE_DIR, "fii_dii_history.json")
+
+def _yf_change(ticker):
+    """Return (last_price, pct_change_vs_previous_close), or (None, None) on failure."""
+    try:
+        fi = yf.Ticker(ticker).fast_info
+        last = fi.get("last_price") or fi.get("lastPrice")
+        prev = fi.get("previous_close") or fi.get("previousClose")
+        if not last or not prev:
+            return None, None
+        return last, ((last - prev) / prev) * 100
+    except Exception as e:
+        print(f"[Pre-Market] Error fetching {ticker}: {e}")
+        return None, None
+
+def _format_pct(pct, flat_threshold=0.1):
+    if pct is None:
+        return "N/A"
+    if abs(pct) < flat_threshold:
+        return "flat"
+    return f"{pct:+.1f}%"
+
+def fetch_fii_dii_flows():
+    """Return (fii_net_cr, dii_net_cr, date_str) for the latest reported session, or (None, None, None)."""
+    try:
+        session = get_nse_session()
+        resp = session.get(NSE_FII_DII_URL, timeout=20)
+        if resp.status_code in (401, 403):
+            _prime_nse_cookies(session)
+            resp = session.get(NSE_FII_DII_URL, timeout=20)
+        resp.raise_for_status()
+        rows = resp.json()
+        fii_net = dii_net = date_str = None
+        for row in rows:
+            category = (row.get("category") or "").upper()
+            if "FII" in category:
+                fii_net = float(row.get("netValue"))
+                date_str = row.get("date")
+            elif "DII" in category:
+                dii_net = float(row.get("netValue"))
+                date_str = date_str or row.get("date")
+        return fii_net, dii_net, date_str
+    except Exception as e:
+        print(f"[Pre-Market] Error fetching FII/DII flows: {e}")
+        return None, None, None
+
+def fetch_nifty50_breadth():
+    """Return (advances, declines, unchanged) for the Nifty 50 constituents, or (None, None, None)."""
+    try:
+        session = get_nse_session()
+        resp = session.get(NSE_ALL_INDICES_URL, timeout=20)
+        if resp.status_code in (401, 403):
+            _prime_nse_cookies(session)
+            resp = session.get(NSE_ALL_INDICES_URL, timeout=20)
+        resp.raise_for_status()
+        data = resp.json().get("data", [])
+        nifty = next((d for d in data if d.get("indexSymbol") == "NIFTY 50"), None)
+        if not nifty:
+            return None, None, None
+        return int(nifty["advances"]), int(nifty["declines"]), int(nifty["unchanged"])
+    except Exception as e:
+        print(f"[Pre-Market] Error fetching Nifty breadth: {e}")
+        return None, None, None
+
+def record_fii_streak(flow_date, fii_net):
+    """Persist today's FII net flow and return the current same-direction streak length."""
+    history = {}
+    if os.path.exists(FII_DII_HISTORY_FILE):
+        try:
+            with open(FII_DII_HISTORY_FILE, "r") as f:
+                history = json.load(f)
+        except Exception as e:
+            print(f"[Pre-Market] Error loading fii_dii_history.json: {e}")
+
+    if flow_date and fii_net is not None:
+        history[flow_date] = fii_net
+        try:
+            with open(FII_DII_HISTORY_FILE, "w") as f:
+                json.dump(history, f, indent=4)
+        except Exception as e:
+            print(f"[Pre-Market] Error saving fii_dii_history.json: {e}")
+
+    if not history:
+        return 1
+    dates_sorted = sorted(history.keys(), reverse=True)
+    sign = 1 if history[dates_sorted[0]] >= 0 else -1
+    streak = 0
+    for d in dates_sorted:
+        day_sign = 1 if history[d] >= 0 else -1
+        if day_sign != sign:
+            break
+        streak += 1
+    return streak
+
 def send_pre_market_report():
     print(f"\n[{datetime.now(IST).strftime('%Y-%m-%d %H:%M:%S')}] Fetching pre-market report...")
     today = datetime.now(IST).date()
@@ -1210,33 +1395,89 @@ def send_pre_market_report():
         send_telegram_message("🔔 <b>Notice:</b> Today market is closed.")
         print("Market is closed today. Sent holiday notice.")
         return
-        
-    query = "nifty+pre-market+OR+gift+nifty+moneycontrol+OR+economic+times"
-    url = f"https://news.google.com/rss/search?q={query}&hl=en-IN&gl=IN&ceid=IN:en"
-    try:
-        feed = feedparser.parse(url)
-        if feed.entries:
-            best_entry = feed.entries[0]
-            for entry in feed.entries[:5]:
-                title_lower = entry.title.lower()
-                if any(w in title_lower for w in ["open", "start", "gift nifty", "nifty"]):
-                    best_entry = entry
-                    break
-            
-            title = best_entry.title
-            sentiment = analyze_sentiment(title, "")
-            color_emoji = "🟢" if sentiment == "positive" else "🔴" if sentiment == "negative" else "🟡"
-            
-            msg = f"🔔 <b>Pre-Market Report (IST {datetime.now(IST).strftime('%H:%M')})</b>\n\n"
-            msg += f"{color_emoji} {title}\n\n"
-            msg += f"<a href='{best_entry.link}'>🔗 Read details on Google News</a>"
-            
-            send_telegram_message(msg)
-            print("Sent pre-market report successfully.")
-        else:
-            print("No pre-market entries found.")
-    except Exception as e:
-        print(f"Error fetching pre-market report: {e}")
+
+    lines = [f"📊 <b>Pre-Market Brief — {datetime.now(IST).strftime('%a, %d %b')}</b>"]
+
+    gift_nifty_line = fetch_gift_nifty_setup()
+    if gift_nifty_line:
+        lines.append(gift_nifty_line)
+
+    # Global cues
+    cue_parts = []
+    for name, ticker in GLOBAL_CUES_TICKERS.items():
+        _, pct = _yf_change(ticker)
+        cue_parts.append(f"{name} {_format_pct(pct)}")
+    lines.append(f"🌏 <b>Global cues:</b> {', '.join(cue_parts)}")
+
+    # Commodities + USD/INR
+    commodity_parts = []
+    for name, ticker in COMMODITY_TICKERS.items():
+        _, pct = _yf_change(ticker)
+        commodity_parts.append(f"{name} {_format_pct(pct)}")
+    usdinr_price, _ = _yf_change(USD_INR_TICKER)
+    usdinr_str = f"{usdinr_price:.2f}" if usdinr_price else "N/A"
+    lines.append(f"🛢️ <b>Commodities:</b> {', '.join(commodity_parts)} | USD/INR {usdinr_str}")
+
+    # FII/DII flows (with a real, persisted FII streak — not guessed)
+    fii_net, dii_net, flow_date = fetch_fii_dii_flows()
+    if fii_net is not None and dii_net is not None:
+        streak = record_fii_streak(flow_date, fii_net)
+        streak_word = "buy" if fii_net >= 0 else "sell"
+        streak_note = f" ({streak}-day {streak_word} streak)" if streak > 1 else ""
+        fii_sign = "+" if fii_net >= 0 else ""
+        dii_sign = "+" if dii_net >= 0 else ""
+        lines.append(
+            f"💰 <b>Flows ({flow_date}):</b> FII {fii_sign}₹{fii_net:,.0f} Cr{streak_note} | "
+            f"DII {dii_sign}₹{dii_net:,.0f} Cr"
+        )
+    else:
+        lines.append("💰 <b>Flows:</b> data unavailable")
+
+    # India VIX
+    vix_level, vix_pct = _yf_change(INDIA_VIX_TICKER)
+    if vix_level is not None:
+        note = ""
+        if vix_pct >= 15:
+            note = " — a real jump, worth noting on position sizing"
+        elif vix_pct <= -15:
+            note = " — a sharp drop in fear"
+        lines.append(f"😨 <b>VIX:</b> {vix_level:.2f} ({_format_pct(vix_pct)}{note})")
+    else:
+        lines.append("😨 <b>VIX:</b> data unavailable")
+
+    # Yesterday's Nifty close + Nifty-50 breadth
+    nifty_level, nifty_pct = _yf_change(NIFTY_INDEX_TICKER)
+    adv, dec, unch = fetch_nifty50_breadth()
+    if nifty_level is not None:
+        close_line = f"📉 <b>Yesterday's close:</b> Nifty {nifty_level:,.0f} ({_format_pct(nifty_pct)})"
+        if adv is not None:
+            close_line += f", Nifty-50 breadth {adv} adv / {dec} dec"
+        lines.append(close_line)
+    else:
+        lines.append("📉 <b>Yesterday's close:</b> data unavailable")
+
+    # Overall sentiment indicator (Nifty direction + VIX move + FII flow)
+    score = 0
+    if nifty_pct is not None:
+        score += 1 if nifty_pct > 0 else -1 if nifty_pct < 0 else 0
+    if vix_pct is not None:
+        score += -1 if vix_pct > 5 else (1 if vix_pct < -5 else 0)
+    if fii_net is not None:
+        score += 1 if fii_net > 0 else -1 if fii_net < 0 else 0
+
+    if score >= 2:
+        sentiment_emoji, sentiment_label = "🟢", "Positive bias"
+    elif score <= -2:
+        sentiment_emoji, sentiment_label = "🔴", "Cautious / negative bias"
+    else:
+        sentiment_emoji, sentiment_label = "🟡", "Mixed / neutral bias"
+    lines.append(f"\n{sentiment_emoji} <b>Sentiment: {sentiment_label}</b>")
+
+    msg = "\n".join(lines)
+    if send_telegram_message(msg):
+        print("Sent pre-market report successfully.")
+    else:
+        print("Failed to send pre-market report.")
 
 def calculate_indicators(df):
     """Calculate MACD and SMA 50"""
