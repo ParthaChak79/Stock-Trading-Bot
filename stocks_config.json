@@ -488,5 +488,15 @@
         "trail_buf": 0.10,
         "probability": 0.84,
         "yf_ticker": "DRREDDY.NS"
+    },
+    "EICHERMOT": {
+        "exchange": "NSE",
+        "name": "Eicher Motors Limited",
+        "tp": 0.20,
+        "sl": 0.28,
+        "trail_act": 0.16,
+        "trail_buf": 0.13,
+        "probability": 0.85,
+        "yf_ticker": "EICHERMOT.NS"
     }
 }

@@ -165,6 +165,12 @@ HIST_MAX = 2.0
 SMA_LEN = 50
 SMA_PCT = 0.02 # Minimum 2% above 50 SMA
 
+# Market-Crash Alert Configuration
+# Fires a Telegram alert when the NIFTY 50 index falls this much (or more)
+# from the previous close during the trading day.
+NIFTY_INDEX_TICKER = "^NSEI"
+MARKET_CRASH_PCT = -2.0
+
 # NSE Market Holidays Configuration for 2026
 NSE_HOLIDAYS = {
     2026: {
@@ -299,7 +305,8 @@ def load_stocks_config():
         "MCX": {"exchange": "NSE", "name": "Multi Commodity Exchange of India Limited", "tp": 0.18, "sl": 0.22, "trail_act": 0.06, "trail_buf": 0.04, "yf_ticker": "MCX.NS"},
         "MARUTI": {"exchange": "NSE", "name": "Maruti Suzuki India Limited", "tp": 0.24, "sl": 0.27, "trail_act": 0.13, "trail_buf": 0.11, "probability": 0.84, "yf_ticker": "MARUTI.NS"},
         "ASIANPAINT": {"exchange": "NSE", "name": "Asian Paints Ltd", "tp": 0.25, "sl": 0.28, "trail_act": 0.13, "trail_buf": 0.095, "probability": 0.9, "yf_ticker": "ASIANPAINT.NS"},
-        "DRREDDY": {"exchange": "NSE", "name": "Dr Reddys Laboratories Ltd", "tp": 0.23, "sl": 0.29, "trail_act": 0.13, "trail_buf": 0.10, "probability": 0.84, "yf_ticker": "DRREDDY.NS"}
+        "DRREDDY": {"exchange": "NSE", "name": "Dr Reddys Laboratories Ltd", "tp": 0.23, "sl": 0.29, "trail_act": 0.13, "trail_buf": 0.10, "probability": 0.84, "yf_ticker": "DRREDDY.NS"},
+        "EICHERMOT": {"exchange": "NSE", "name": "Eicher Motors Limited", "tp": 0.20, "sl": 0.28, "trail_act": 0.16, "trail_buf": 0.13, "probability": 0.85, "yf_ticker": "EICHERMOT.NS"}
     }
 
 STOCKS = load_stocks_config()
@@ -518,6 +525,67 @@ def send_telegram_message(message):
         if hasattr(e, 'response') and e.response is not None:
             print(f"Response: {e.response.text}")
         return False
+
+MARKET_CRASH_STATE_FILE = os.path.join(BASE_DIR, "market_crash_state.json")
+
+def load_market_crash_state():
+    if os.path.exists(MARKET_CRASH_STATE_FILE):
+        try:
+            with open(MARKET_CRASH_STATE_FILE, "r") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Error loading market_crash_state.json: {e}")
+    return {}
+
+def save_market_crash_state(state):
+    try:
+        with open(MARKET_CRASH_STATE_FILE, "w") as f:
+            json.dump(state, f, indent=4)
+    except Exception as e:
+        print(f"Error saving market_crash_state.json: {e}")
+
+def check_market_crash():
+    """Alert once per trading day if the NIFTY 50 index falls MARKET_CRASH_PCT
+    (or more) from the previous close. Independent of the per-stock strategy."""
+    today = datetime.now(IST).date()
+    if is_market_closed(today):
+        return
+
+    today_str = today.strftime("%Y-%m-%d")
+    crash_state = load_market_crash_state()
+    if crash_state.get("last_alert_date") == today_str:
+        return  # Already alerted for today's drop
+
+    try:
+        nifty = yf.Ticker(NIFTY_INDEX_TICKER)
+        fast_info = nifty.fast_info
+        current_price = fast_info.get("last_price") or fast_info.get("lastPrice")
+        prev_close = fast_info.get("previous_close") or fast_info.get("previousClose")
+
+        if not current_price or not prev_close:
+            print("[Market Crash] Could not fetch NIFTY price data.")
+            return
+
+        pct_change = ((current_price - prev_close) / prev_close) * 100
+
+        if pct_change <= MARKET_CRASH_PCT:
+            msg = f"━━━━━━━━━━━━━━━━━━━━━━\n🚨 <b>MARKET CRASH ALERT</b> 🚨\n━━━━━━━━━━━━━━━━━━━━━━\n"
+            msg += f"📉 <b>NIFTY 50</b> is down <b>{pct_change:.2f}%</b> today\n\n"
+            msg += f"🔹 Previous Close: ₹{prev_close:,.2f}\n"
+            msg += f"🔹 Current Price: ₹{current_price:,.2f}\n\n"
+            msg += f"⚠️ Sharp market-wide decline detected — review open positions.\n"
+            msg += f"\n#NIFTY #NSE #MarketCrash"
+
+            print(f"[Market Crash] NIFTY down {pct_change:.2f}%. Sending alert.")
+            if send_telegram_message(msg):
+                crash_state["last_alert_date"] = today_str
+                save_market_crash_state(crash_state)
+            else:
+                print("[Market Crash] Failed to send alert. Will retry next cycle.")
+        else:
+            print(f"[Market Crash] NIFTY change: {pct_change:.2f}% (threshold {MARKET_CRASH_PCT:.2f}%)")
+    except Exception as e:
+        print(f"[Market Crash] Error checking NIFTY: {e}")
 
 REMINDERS_FILE = os.path.join(BASE_DIR, "signal_reminders.json")
 
@@ -1344,12 +1412,16 @@ def run_scheduler():
     check_news_stream()
     check_earnings_surprises()
     check_and_send_reminders()
+    check_market_crash()
 
     # Schedule trading check every hour
     schedule.every(1).hours.do(analyze_stocks)
 
     # Schedule breaking news check every 30 minutes
     schedule.every(30).minutes.do(check_news_stream)
+
+    # Schedule market-crash check every 5 minutes (needs to catch sudden drops fast)
+    schedule.every(5).minutes.do(check_market_crash)
 
     # Schedule earnings-surprise filing check every 15 minutes (to catch
     # results filings quickly during market hours)
