@@ -661,20 +661,17 @@ def send_holdings_report():
     # 2. Exited Holdings
     msg_lines.append("━━━━━━━━━━━━━━━━━━━━━━\n🟥 <b>Recent Exits (Last 3 Months)</b>\n━━━━━━━━━━━━━━━━━━━━━━")
     
-    # Filter out active tickers from exited list just in case
-    active_tickers = set(state.keys())
     today_date = datetime.now(IST).date()
     
     exited_to_show = []
     for t in closed_trades:
-        if t['ticker'] not in active_tickers:
-            try:
-                exit_date_obj = datetime.strptime(t['exit_date'], "%d %b %Y").date()
-                if (today_date - exit_date_obj).days <= 90:
-                    exited_to_show.append(t)
-            except Exception:
-                # If date parsing fails, include it just in case
+        try:
+            exit_date_obj = datetime.strptime(t['exit_date'], "%d %b %Y").date()
+            if (today_date - exit_date_obj).days <= 90:
                 exited_to_show.append(t)
+        except Exception:
+            # If date parsing fails, include it just in case
+            exited_to_show.append(t)
     
     if not exited_to_show:
         msg_lines.append("\n<i>No exited holdings to show.</i>")
