@@ -4,7 +4,7 @@
 ================================================================================
 Supplies the *qualitative* criterion scores that STOCK_SCREENER_SPEC.md leaves
 to researched judgment (moat, management, governance, AI exposure, etc.), using
-Google Gemini 2.5 Pro with Google-Search grounding, called over the REST API
+Google Gemini 3.1 Pro with Google-Search grounding, called over the REST API
 (generativelanguage.googleapis.com) so no extra SDK dependency is required.
 
 Design decisions (see the CLAUDE.md discussion that led here):
@@ -24,7 +24,6 @@ Set GEMINI_API_KEY in .env (free/paid key from https://aistudio.google.com/apike
 import os
 import re
 import json
-import time
 from datetime import datetime, timezone, timedelta
 
 import requests
@@ -32,10 +31,19 @@ import requests
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CACHE_FILE = os.path.join(BASE_DIR, "qualitative_scores.json")
 
-GEMINI_MODEL = "gemini-2.5-pro"
-GEMINI_URL = (f"https://generativelanguage.googleapis.com/v1beta/models/"
-              f"{GEMINI_MODEL}:generateContent")
+# Model is resolved at call time (not import) so a GEMINI_MODEL override in .env
+# is picked up after dotenv loads. Default is Gemini 3.1 Pro.
+DEFAULT_MODEL = "gemini-3.1-pro-preview"
 CACHE_TTL_DAYS = 30
+
+
+def _model():
+    return _clean_env_var(os.getenv("GEMINI_MODEL")) or DEFAULT_MODEL
+
+
+def _gemini_url():
+    return (f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{_model()}:generateContent")
 
 # Numeric qualitative fields and their valid ranges (min, max).
 # Everything not listed is treated as 0-100.
@@ -191,7 +199,7 @@ def _call_gemini(api_key, prompt):
         "tools": [{"google_search": {}}],
         "generationConfig": {"temperature": 0.2},
     }
-    resp = requests.post(GEMINI_URL, params={"key": api_key},
+    resp = requests.post(_gemini_url(), params={"key": api_key},
                          json=body, timeout=90)
     resp.raise_for_status()
     data = resp.json()
