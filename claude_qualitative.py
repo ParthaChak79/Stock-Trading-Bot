@@ -1,11 +1,11 @@
 """
 ================================================================================
- GEMINI QUALITATIVE SCORING
+ CLAUDE QUALITATIVE SCORING
 ================================================================================
 Supplies the *qualitative* criterion scores that STOCK_SCREENER_SPEC.md leaves
 to researched judgment (moat, management, governance, AI exposure, etc.), using
-Google Gemini 3.1 Pro with Google-Search grounding, called over the REST API
-(generativelanguage.googleapis.com) so no extra SDK dependency is required.
+the Anthropic Claude API (default model claude-opus-4-8) with the server-side
+web_search tool for grounding — the analog of a search-grounded LLM call.
 
 Design decisions (see the CLAUDE.md discussion that led here):
   - Quantitative criteria are re-scored from fresh TradingView data every run, but
@@ -13,11 +13,17 @@ Design decisions (see the CLAUDE.md discussion that led here):
     would reshuffle ranks on model noise alone. So qualitative scores are CACHED
     per ticker in qualitative_scores.json and only recomputed when missing or
     older than CACHE_TTL_DAYS. New names always get fresh scores.
-  - GRACEFUL DEGRADATION: if GEMINI_API_KEY is unset or the call/parse fails, we
-    return {} — the scoring engine then falls back to the spec's per-criterion
+  - GRACEFUL DEGRADATION: if ANTHROPIC_API_KEY is unset or the call/parse fails,
+    we return {} — the scoring engine then falls back to the spec's per-criterion
     defaults. The Sunday job never crashes on a missing key or an API hiccup.
 
-Set GEMINI_API_KEY in .env (free/paid key from https://aistudio.google.com/apikey).
+Setup:
+  - Add ANTHROPIC_API_KEY to .env (key from console.anthropic.com).
+  - Install the SDK: pip install anthropic  (also listed in requirements.txt).
+  - Optional: ANTHROPIC_MODEL in .env overrides the default model id.
+The `anthropic` SDK is imported lazily inside the API call, so this module (and
+the whole screener) still imports and runs its cache/default path even if the
+package isn't installed yet.
 ================================================================================
 """
 
@@ -26,24 +32,14 @@ import re
 import json
 from datetime import datetime, timezone, timedelta
 
-import requests
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CACHE_FILE = os.path.join(BASE_DIR, "qualitative_scores.json")
 
-# Model is resolved at call time (not import) so a GEMINI_MODEL override in .env
-# is picked up after dotenv loads. Default is Gemini 3.1 Pro.
-DEFAULT_MODEL = "gemini-3.1-pro-preview"
+# Model is resolved at call time (not import) so an ANTHROPIC_MODEL override in
+# .env is picked up after dotenv loads. Default is Claude Opus 4.8.
+DEFAULT_MODEL = "claude-opus-4-8"
 CACHE_TTL_DAYS = 30
-
-
-def _model():
-    return _clean_env_var(os.getenv("GEMINI_MODEL")) or DEFAULT_MODEL
-
-
-def _gemini_url():
-    return (f"https://generativelanguage.googleapis.com/v1beta/models/"
-            f"{_model()}:generateContent")
+MAX_TOKENS = 16000
 
 # Numeric qualitative fields and their valid ranges (min, max).
 # Everything not listed is treated as 0-100.
@@ -77,6 +73,10 @@ def _clean_env_var(value):
     return value.split("#")[0].strip()
 
 
+def _model():
+    return _clean_env_var(os.getenv("ANTHROPIC_MODEL")) or DEFAULT_MODEL
+
+
 def _load_cache():
     try:
         with open(CACHE_FILE) as f:
@@ -102,14 +102,15 @@ def _is_fresh(entry):
 
 
 def _build_prompt(ticker, data):
-    """Prompt Gemini with the live quantitative context + the spec's rubrics, and
+    """Prompt Claude with the live quantitative context + the spec's rubrics, and
     demand a strict JSON object of qualitative scores with reasoning."""
     ctx = {k: data.get(k) for k in
            ("name", "sector", "industry", "roe", "roce", "pe", "de", "mcap",
             "sg1y", "sg5y", "pg1y", "pg5y", "ltp")}
     return f"""You are a fundamental equity analyst scoring the Indian (NSE) stock \
-{ticker} ({data.get('name')}). Research it using current information and return \
-ONLY a JSON object (no prose, no markdown fences) with the fields below.
+{ticker} ({data.get('name')}). Research it with the web_search tool where current \
+facts (governance events, AI initiatives, sector catalysts) would sharpen a score, \
+then return ONLY a JSON object (no prose, no markdown fences) with the fields below.
 
 Live quantitative context (already computed elsewhere — do NOT re-score these):
 {json.dumps(ctx, indent=2)}
@@ -193,23 +194,38 @@ def _clamp(parsed):
     return out
 
 
-def _call_gemini(api_key, prompt):
-    body = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "tools": [{"google_search": {}}],
-        "generationConfig": {"temperature": 0.2},
-    }
-    resp = requests.post(_gemini_url(), params={"key": api_key},
-                         json=body, timeout=90)
-    resp.raise_for_status()
-    data = resp.json()
-    parts = data["candidates"][0]["content"]["parts"]
-    return "".join(p.get("text", "") for p in parts)
+def _call_claude(api_key, prompt):
+    """One grounded scoring call. Uses the web_search server tool; resumes the
+    server-tool loop on pause_turn. Returns the concatenated response text.
+    The `anthropic` SDK is imported here so the module loads without it."""
+    import anthropic
+
+    client = anthropic.Anthropic(api_key=api_key)
+    tools = [{"type": "web_search_20260209", "name": "web_search", "max_uses": 4}]
+    messages = [{"role": "user", "content": prompt}]
+
+    response = None
+    for _ in range(6):  # cap pause_turn resumes
+        response = client.messages.create(
+            model=_model(),
+            max_tokens=MAX_TOKENS,
+            thinking={"type": "adaptive"},
+            output_config={"effort": "medium"},
+            tools=tools,
+            messages=messages,
+        )
+        if response.stop_reason != "pause_turn":
+            break
+        messages.append({"role": "assistant", "content": response.content})
+
+    if response is None or response.stop_reason == "refusal":
+        return ""
+    return "".join(b.text for b in response.content if b.type == "text")
 
 
 def get_qualitative(ticker_norm, data, cache, api_key, force=False):
     """Return a qualitative-scores dict for one stock. Uses the cache unless the
-    entry is stale/missing/forced. Falls back to {} (-> spec defaults) if Gemini
+    entry is stale/missing/forced. Falls back to {} (-> spec defaults) if Claude
     is unavailable or the response can't be parsed. `cache` is mutated in place;
     the caller is responsible for persisting it via save_cache()."""
     entry = cache.get(ticker_norm)
@@ -220,10 +236,10 @@ def get_qualitative(ticker_norm, data, cache, api_key, force=False):
         return entry.get("scores", {}) if entry else {}
 
     try:
-        text = _call_gemini(api_key, _build_prompt(ticker_norm, data))
+        text = _call_claude(api_key, _build_prompt(ticker_norm, data))
         parsed = _extract_json(text)
         if not parsed:
-            print(f"[gemini] {ticker_norm}: could not parse JSON; using defaults")
+            print(f"[claude] {ticker_norm}: could not parse JSON; using defaults")
             return entry.get("scores", {}) if entry else {}
         scores = _clamp(parsed)
         cache[ticker_norm] = {
@@ -233,12 +249,12 @@ def get_qualitative(ticker_norm, data, cache, api_key, force=False):
         }
         return scores
     except Exception as e:
-        print(f"[gemini] {ticker_norm}: call failed ({e}); using {'cached' if entry else 'defaults'}")
+        print(f"[claude] {ticker_norm}: call failed ({e}); using {'cached' if entry else 'defaults'}")
         return entry.get("scores", {}) if entry else {}
 
 
 def load_api_key():
-    return _clean_env_var(os.getenv("GEMINI_API_KEY"))
+    return _clean_env_var(os.getenv("ANTHROPIC_API_KEY"))
 
 
 def load_cache():

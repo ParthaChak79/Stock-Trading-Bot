@@ -16,8 +16,9 @@ Pipeline (run once, then exits — schedule via cron every Sunday morning):
      (tv_fundamentals.py).
   4. EXCLUDE — drop sector/industry/ticker-excluded and stagnant-growth names
      (STOCK_SCREENER_SPEC.md Sections 8-9) before scoring.
-  5. QUALITATIVE — Gemini 2.5 Pro (gemini_qualitative.py) supplies the researched
-     qualitative criteria, cached per ticker so ranks don't jitter on LLM noise.
+  5. QUALITATIVE — Claude (claude_qualitative.py, default claude-opus-4-8 with
+     web_search grounding) supplies the researched qualitative criteria, cached
+     per ticker so ranks don't jitter on LLM noise.
   6. SCORE — scoring_engine.py combines quant + qualitative into the final score.
   7. REBUILD — keep every stock scoring >= 60, re-rank all of them, and write the
      result back to top50_stocks_v36.json (previous version backed up alongside).
@@ -32,8 +33,8 @@ SCHEDULING (every Sunday 8:00 AM local)
     # crontab -e
     0 8 * * 0 cd "/path/to/telegram_trading_bot" && /usr/bin/python3 stock_screener.py >> screener.log 2>&1
 
-Requires GEMINI_API_KEY in .env for the qualitative half. Without it the script
-still runs, but qualitative criteria fall back to the spec's neutral defaults.
+Requires ANTHROPIC_API_KEY in .env for the qualitative half. Without it the script
+aborts (leaving the list untouched) unless --allow-no-llm is passed.
 ================================================================================
 """
 
@@ -47,7 +48,7 @@ import requests
 from dotenv import load_dotenv
 
 import tv_fundamentals as tvf
-import gemini_qualitative as gq
+import claude_qualitative as gq
 from scoring_engine import score_stock
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -112,21 +113,21 @@ def load_existing_list():
         return {"stocks": []}
 
 
-def build_ranked_list(allow_no_gemini=False):
+def build_ranked_list(allow_no_llm=False):
     now_ist = datetime.now(IST)
     print(f"[{now_ist.strftime('%Y-%m-%d %H:%M:%S')}] Rebuilding ranked list...")
 
     api_key = gq.load_api_key()
-    if not api_key and not allow_no_gemini:
-        print("[screener] ABORT: GEMINI_API_KEY not set. Rebuilding without the "
+    if not api_key and not allow_no_llm:
+        print("[screener] ABORT: ANTHROPIC_API_KEY not set. Rebuilding without the "
               "qualitative half would collapse the list to a handful of names and "
-              "overwrite the curated file. Set GEMINI_API_KEY in .env, or pass "
-              "--allow-no-gemini to intentionally rebuild on quant + neutral "
+              "overwrite the curated file. Set ANTHROPIC_API_KEY in .env, or pass "
+              "--allow-no-llm to intentionally rebuild on quant + neutral "
               "defaults only. Existing list left untouched.")
         return None
     if not api_key:
-        print("[screener] WARNING: GEMINI_API_KEY not set — qualitative criteria "
-              "use spec defaults (--allow-no-gemini). Results will be quant-only.")
+        print("[screener] WARNING: ANTHROPIC_API_KEY not set — qualitative criteria "
+              "use spec defaults (--allow-no-llm). Results will be quant-only.")
 
     existing = load_existing_list()
     existing_syms = [s["ticker"] for s in existing.get("stocks", [])]
@@ -153,7 +154,7 @@ def build_ranked_list(allow_no_gemini=False):
         sector_excluded = tvf.is_excluded(data)
         if sector_excluded:
             excluded += 1
-            continue  # never scored (spec Section 8) — also saves a Gemini call
+            continue  # never scored (spec Section 8) — also saves an LLM call
 
         qualitative = gq.get_qualitative(key, data, cache, api_key)
         scored = score_stock(
@@ -212,4 +213,4 @@ def build_ranked_list(allow_no_gemini=False):
 
 
 if __name__ == "__main__":
-    build_ranked_list(allow_no_gemini="--allow-no-gemini" in sys.argv)
+    build_ranked_list(allow_no_llm="--allow-no-llm" in sys.argv)

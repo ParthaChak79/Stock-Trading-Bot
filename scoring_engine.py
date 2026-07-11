@@ -9,8 +9,8 @@ truth; if the spec changes, update this file in lockstep.
 Split of responsibility:
   - Quantitative criteria are computed here from a flat `data` dict (fields
     fetched from TradingView's scanner by tv_fundamentals.py).
-  - Qualitative criteria are supplied in a `qualitative` dict (from Gemini via
-    gemini_qualitative.py, or per-function spec defaults when unavailable).
+  - Qualitative criteria are supplied in a `qualitative` dict (from the Claude API
+    via claude_qualitative.py, or per-function spec defaults when unavailable).
 
 Two deviations from the spec's literal code, both to use better live data rather
 than the spec's fallback approximations — noted inline:

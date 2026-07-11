@@ -44,10 +44,10 @@ Key features:
 | `stock_screener.py` | Standalone script (independent of app.py's process) — orchestrates the ranked-list rebuild. Uses TradingView's scanner as a *candidate feed*, unions with the existing `top50_stocks_v36.json`, scores every name via the engine below, and rewrites the list. Does **not** send to Telegram. Meant to be run via cron (weekly, Sunday AM); see its module docstring |
 | `scoring_engine.py` | Deterministic Python port of `STOCK_SCREENER_SPEC.md`'s fundamental scoring engine (5 weighted categories, ≥60 inclusion threshold). Computes quantitative criteria from a flat data dict; qualitative criteria are passed in. `STOCK_SCREENER_SPEC.md` is the source of truth — keep them in lockstep |
 | `tv_fundamentals.py` | Pulls the scoring engine's quantitative fields from TradingView's scanner, computes sector-average P/E & EV/EBITDA, applies the spec's sector/industry/ticker exclusion filter, and normalizes NSE↔TradingView tickers. Field names verified against `scanner.tradingview.com/india/metainfo` |
-| `gemini_qualitative.py` | Supplies the qualitative criterion scores (moat, governance, AI-exposure, etc.) via Google Gemini 3.1 Pro (REST + Google-Search grounding). Cached per-ticker in `qualitative_scores.json`, refreshed only when missing or >30 days old. Degrades to spec defaults if `GEMINI_API_KEY` is unset or the call fails |
+| `claude_qualitative.py` | Supplies the qualitative criterion scores (moat, governance, AI-exposure, etc.) via the Anthropic Claude API (default `claude-opus-4-8`, with the `web_search` server tool for grounding). Cached per-ticker in `qualitative_scores.json`, refreshed only when missing or >30 days old. The `anthropic` SDK is imported lazily, so the module loads even if the package is absent. Degrades to spec defaults if `ANTHROPIC_API_KEY` is unset or the call fails |
 | `STOCK_SCREENER_SPEC.md` | Canonical specification of the fundamental scoring engine (categories, weights, criterion formulas, exclusion rules). Ported by `scoring_engine.py` |
 | `top50_stocks_v36.json` | The ranked master list — every stock scoring ≥60, re-ranked each rebuild. Committed (curated data); `stock_screener.py` backs up the prior version to `top50_stocks_v36.json.bak` (gitignored) before each rewrite |
-| `qualitative_scores.json` | Per-ticker Gemini qualitative-score cache with reasoning + `asof` date — gitignored, runtime-generated |
+| `qualitative_scores.json` | Per-ticker Claude qualitative-score cache with reasoning + `asof` date — gitignored, runtime-generated |
 | `earnings_estimates.json` | Unused — was consensus-estimate input for the old PDF-parsing earnings pipeline; `check_earnings_surprises` now gets estimates directly from TradingView |
 | `portfolio_state.json` | Active trades: entry price, entry time, highest price (for trailing stop trigger) — gitignored, runtime-generated |
 | `closed_trades.json` | Completed trades: entry/exit prices, PnL, exit reason — gitignored, runtime-generated |
@@ -90,7 +90,7 @@ Key features:
 - `stock_screener.py`'s candidate screen filters server-side via the scanner's `filter` array (including direct column-vs-column comparisons, e.g. `close > EMA50`) — one request surfaces new candidate names; `tv_fundamentals.py` then batch-fetches full per-name fundamentals (ROE, ROCE, PEG, D/E, EV/EBITDA, growth CAGRs, FCF, analyst rating) for scoring
 - Field names for both were confirmed against the scanner's own `/india/metainfo` field list and cross-checked against live values before use, not guessed
 
-**Ranked-list rebuild pipeline** (`stock_screener.py` → `tv_fundamentals.py` + `gemini_qualitative.py` + `scoring_engine.py`): the screener is only a *discovery funnel*. Each run scores the union of the existing `top50_stocks_v36.json` and the fresh screener candidates, so existing holdings are re-evaluated with live data (a name that decays below 60 drops off), and the strict screen only ever *adds* genuinely new qualifying names. Quantitative criteria are recomputed from TradingView every run; qualitative criteria (moat, governance, AI-exposure) come from Gemini 3.1 Pro and are cached per-ticker (`qualitative_scores.json`, 30-day TTL) so ranks don't jitter on LLM noise. Every stock scoring ≥60 is kept and re-ranked. **Safety guard:** if `GEMINI_API_KEY` is unset the rebuild *aborts and leaves the list untouched* (quant-only scoring collapses the list to a handful of names) — override intentionally with `--allow-no-gemini`.
+**Ranked-list rebuild pipeline** (`stock_screener.py` → `tv_fundamentals.py` + `claude_qualitative.py` + `scoring_engine.py`): the screener is only a *discovery funnel*. Each run scores the union of the existing `top50_stocks_v36.json` and the fresh screener candidates, so existing holdings are re-evaluated with live data (a name that decays below 60 drops off), and the strict screen only ever *adds* genuinely new qualifying names. Quantitative criteria are recomputed from TradingView every run; qualitative criteria (moat, governance, AI-exposure) come from the Claude API (`claude-opus-4-8` + `web_search`) and are cached per-ticker (`qualitative_scores.json`, 30-day TTL) so ranks don't jitter on LLM noise. Every stock scoring ≥60 is kept and re-ranked. **Safety guard:** if `ANTHROPIC_API_KEY` is unset the rebuild *aborts and leaves the list untouched* (quant-only scoring collapses the list to a handful of names) — override intentionally with `--allow-no-llm`.
 
 ## Development Commands
 
@@ -116,12 +116,12 @@ python strategy_optimizer.py
 
 ### Rebuild the Ranked Stock List
 ```bash
-python stock_screener.py                    # normal run (requires GEMINI_API_KEY)
-python stock_screener.py --allow-no-gemini  # quant-only, no qualitative (degraded)
+python stock_screener.py                 # normal run (requires ANTHROPIC_API_KEY)
+python stock_screener.py --allow-no-llm  # quant-only, no qualitative (degraded)
 ```
 - Standalone, independent of `app.py`'s process — runs once and exits. Does **not** send to Telegram; it rewrites `top50_stocks_v36.json` (prior version → `.bak`)
 - Rebuilds by re-scoring the union of the existing list and the TradingView screener candidates via `STOCK_SCREENER_SPEC.md` (see the "Ranked-list rebuild pipeline" note above), keeping every stock ≥60
-- Requires `GEMINI_API_KEY` in `.env` for the qualitative half; aborts (list untouched) if it's missing unless `--allow-no-gemini` is passed
+- Requires `ANTHROPIC_API_KEY` in `.env` (and `pip install anthropic`) for the qualitative half; aborts (list untouched) if it's missing unless `--allow-no-llm` is passed
 - Candidate-screen filters are hardcoded constants near the top of the file (`FILTERS` list) — no CLI args beyond the flag above
 - Intended to be scheduled via cron (weekly, Sunday AM), not run continuously; see the module docstring for the exact cron line
 
@@ -144,8 +144,8 @@ TWILIO_API_SECRET=<optional>
 TWILIO_FROM_WHATSAPP=<optional>
 TWILIO_TO_WHATSAPP=<optional>
 HF_API_TOKEN=<optional — free token from huggingface.co/settings/tokens, enables FinBERT sentiment instead of the keyword fallback>
-GEMINI_API_KEY=<required by stock_screener.py's ranked-list rebuild — key from aistudio.google.com/apikey; powers the Gemini 3.1 Pro qualitative scoring. Not used by app.py. Pro models need BILLING enabled on the API project — a free-tier key returns HTTP 429 "limit: 0" for gemini-3.1-pro; a consumer Gemini subscription does NOT grant API quota>
-GEMINI_MODEL=<optional override for the model id (default gemini-3.1-pro-preview); e.g. gemini-3.5-flash / gemini-flash-latest work on the free tier if Pro billing isn't set up>
+ANTHROPIC_API_KEY=<required by stock_screener.py's ranked-list rebuild — key from console.anthropic.com; powers the Claude qualitative scoring (default claude-opus-4-8 with web_search grounding). Not used by app.py>
+ANTHROPIC_MODEL=<optional override for the Claude model id (default claude-opus-4-8)>
 ```
 `clean_env_var()` strips inline `#` comments from any of these, so values can be commented in place in `.env`.
 
@@ -171,7 +171,7 @@ Each stock entry requires:
 - Primary: `tvdatafeed` (TradingView charts data) — used for the core MACD/SMA daily-bar analysis
 - Secondary: `yfinance` — used for per-stock news, breaking-news stream, and all pre-market-brief data (global cues, commodities, VIX, FX, Nifty level)
 - TradingView's scanner API (`scanner.tradingview.com`, separate from `tvdatafeed`) — used for earnings-surprise data, the candidate screen, and all quantitative scoring fields in the ranked-list rebuild (`tv_fundamentals.py`); unauthenticated but undocumented
-- Google Gemini 3.1 Pro (`generativelanguage.googleapis.com`, REST + Google-Search grounding) — used only by `stock_screener.py`'s rebuild for the qualitative scoring criteria; needs `GEMINI_API_KEY`
+- Anthropic Claude API (`api.anthropic.com` via the `anthropic` SDK; default `claude-opus-4-8` with the `web_search` server tool for grounding) — used only by `stock_screener.py`'s rebuild for the qualitative scoring criteria; needs `ANTHROPIC_API_KEY`
 - NSE's own JSON APIs (`nseindia.com/api/...`) — used for FII/DII flows and Nifty-50 breadth in the pre-market brief; these require a primed cookie session (see `get_nse_session`) or they 401/403
 
 ### State Persistence
@@ -202,6 +202,7 @@ See `requirements.txt`:
 - `schedule` — task scheduling
 - `tvdatafeed` — TradingView market data (from GitHub fork)
 - `yfinance` — Yahoo Finance fallback
+- `anthropic` — Claude API SDK, used only by `stock_screener.py`'s qualitative scoring (imported lazily; not needed to run `app.py`)
 
 Not in `requirements.txt` but required at import time:
 - `twilio` — see the constraint noted above
