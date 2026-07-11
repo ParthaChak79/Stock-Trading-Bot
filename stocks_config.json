@@ -454,9 +454,10 @@
         "exchange": "NSE",
         "name": "Multi Commodity Exchange of India Limited",
         "tp": 0.18,
-        "sl": 0.22,
-        "trail_act": 0.06,
-        "trail_buf": 0.04,
+        "sl": 0.23,
+        "trail_act": 0.09,
+        "trail_buf": 0.07,
+        "probability": 0.86,
         "yf_ticker": "MCX.NS"
     },
     "MARUTI": {
