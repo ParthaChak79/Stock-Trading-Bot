@@ -5,6 +5,33 @@ import requests
 import feedparser
 import schedule
 import time
+
+import shutil
+
+def atomic_save_json(data, filepath):
+    tmp_path = filepath + ".tmp"
+    try:
+        with open(tmp_path, "w") as f:
+            import json
+            json.dump(data, f, indent=4)
+        import os
+        os.replace(tmp_path, filepath)
+    except Exception as e:
+        print(f"Error in atomic_save_json for {filepath}: {e}")
+
+def backup_state_files():
+    import os, shutil
+    from datetime import datetime
+    backup_dir = os.path.join(BASE_DIR, "backups")
+    os.makedirs(backup_dir, exist_ok=True)
+    today = datetime.now().strftime("%Y%m%d")
+    for filename in ["portfolio_state.json", "closed_trades.json"]:
+        src = os.path.join(BASE_DIR, filename)
+        if os.path.exists(src):
+            dst = os.path.join(backup_dir, f"{filename.split('.')[0]}_{today}.json")
+            if not os.path.exists(dst):
+                shutil.copy2(src, dst)
+
 import re
 import string
 import yfinance as yf
@@ -311,8 +338,8 @@ def load_state():
     return {}
 
 def save_state(state):
-    with open(STATE_FILE, "w") as f:
-        json.dump(state, f, indent=4)
+    atomic_save_json(state, STATE_FILE)
+    backup_state_files()
 
 def load_seen_news():
     seen_links = set()
@@ -419,11 +446,8 @@ def log_closed_trade(ticker, name, entry_price, exit_price, entry_date, exit_dat
         "pnl_pct": float(pnl_pct),
         "reason": str(reason)
     })
-    try:
-        with open(CLOSED_TRADES_FILE, "w") as f:
-            json.dump(trades, f, indent=4)
-    except Exception as e:
-        print(f"Error saving closed_trades.json: {e}")
+    atomic_save_json(trades, CLOSED_TRADES_FILE)
+    backup_state_files()
 
 def send_whatsapp_message(message):
     if not TWILIO_ACCOUNT_SID:
@@ -458,11 +482,20 @@ def send_whatsapp_message(message):
             client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
             
         print(f"[WhatsApp] Sending message to {TWILIO_TO_WHATSAPP} from {TWILIO_FROM_WHATSAPP}...")
-        client.messages.create(
-            body=clean_message,
-            from_=TWILIO_FROM_WHATSAPP,
-            to=TWILIO_TO_WHATSAPP
-        )
+        # Chunk message if it exceeds Twilio's 1600 character limit
+        chunk_size = 1500
+        chunks = [clean_message[i:i+chunk_size] for i in range(0, len(clean_message), chunk_size)]
+        
+        for idx, chunk in enumerate(chunks):
+            if len(chunks) > 1:
+                chunk = f"[{idx+1}/{len(chunks)}]\n{chunk}"
+            client.messages.create(
+                body=chunk,
+                from_=TWILIO_FROM_WHATSAPP,
+                to=TWILIO_TO_WHATSAPP
+            )
+            if len(chunks) > 1:
+                time.sleep(1) # prevent rate limiting on multiple chunks
         print("[WhatsApp] WhatsApp message sent successfully.")
     except Exception as e:
         print(f"[WhatsApp] Error sending WhatsApp message: {e}")
@@ -1419,7 +1452,6 @@ def analyze_stocks():
                     
                     print(f"Sending SELL alert for {ticker} (Reason: {sell_reason})")
                     if send_telegram_message(msg):
-                        add_reminder(ticker, "SELL", msg)
                         
                         # Log to closed trades
                         log_closed_trade(
@@ -1473,7 +1505,6 @@ def analyze_stocks():
                             "date": date_str
                         }
                         save_state(state)
-                        add_reminder(ticker, "BUY", msg)
                     else:
                         print(f"Failed to send BUY alert for {ticker}. Will retry next cycle.")
                 else:
@@ -1490,7 +1521,6 @@ def run_scheduler():
     analyze_stocks()
     check_news_stream()
     check_earnings_surprises()
-    check_and_send_reminders()
     check_market_crash()
 
     # Schedule trading check every hour
@@ -1508,9 +1538,6 @@ def run_scheduler():
     
     # Schedule pre-market report daily at 9:08 AM IST (Asia/Kolkata)
     schedule.every().day.at("09:08", "Asia/Kolkata").do(send_pre_market_report)
-    
-    # Schedule yesterday's reminders daily at 9:10 AM IST (Asia/Kolkata)
-    schedule.every().day.at("09:10", "Asia/Kolkata").do(check_and_send_reminders)
     
     # Schedule weekly holdings report every Friday at 4:00 PM IST (Asia/Kolkata)
     schedule.every().friday.at("16:00", "Asia/Kolkata").do(send_holdings_report)

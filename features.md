@@ -41,7 +41,16 @@ Delivered every trading morning before the market opens, so you can plan your da
 - **Yesterday's close** — where the index ended and how broad the move was (advances vs. declines)
 - **Overall bias** — a simple positive/neutral/cautious read to frame your day
 
-## 7. Delivery
+## 7. Continuously Curated Stock Universe
+
+The stocks you get alerts on aren't a static, hand-picked list — they're drawn from a shortlist of high-quality, growing businesses that's re-screened every week.
+
+- A **30-parameter fundamental scoring engine** ranks NSE companies across five dimensions — financial quality, valuation, business strength, governance, and momentum — and only admits those that clear a strict quality bar.
+- Each company's **exposure to AI and automation** is scored as part of that model — a structural tailwind for some businesses, a risk for others — so the shortlist favours companies positioned to benefit rather than be disrupted.
+- Weak sectors and stagnant-growth businesses are **filtered out entirely** before scoring, keeping the focus on durable compounders.
+- The list **refreshes on a rolling basis**: existing names are re-checked against fresh data and drop off if their quality decays, while genuinely new qualifying businesses rise onto the shortlist — so the watchlist behind your alerts stays focused on the strongest candidates without going stale.
+
+## 8. Delivery
 
 - Alerts are sent instantly to Telegram.
 - Optional WhatsApp mirroring is available if you'd like every alert duplicated there too.
