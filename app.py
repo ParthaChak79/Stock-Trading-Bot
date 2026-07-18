@@ -287,14 +287,14 @@ def load_stocks_config():
         "HDFCBANK": {"exchange": "NSE", "name": "HDFC Bank", "tp": 0.27, "sl": 0.23, "trail_act": 0.15, "trail_buf": 0.08},
         "ICICIBANK": {"exchange": "NSE", "name": "ICICI Bank", "tp": 0.30, "sl": 0.25, "trail_act": 0.14, "trail_buf": 0.08},
         "DIXON": {"exchange": "NSE", "name": "Dixon Tech", "tp": 0.27, "sl": 0.19, "trail_act": 0.14, "trail_buf": 0.08},
-        "BAJAJ_AUTO": {"exchange": "NSE", "name": "Bajaj Auto", "tp": 0.26, "sl": 0.19, "trail_act": 0.14, "trail_buf": 0.07, "yf_ticker": "BAJAJ-AUTO.NS"},
+        "BAJAJ_AUTO": {"exchange": "NSE", "name": "Bajaj Auto", "tp": 0.24, "sl": 0.20, "trail_act": 0.11, "trail_buf": 0.08, "yf_ticker": "BAJAJ-AUTO.NS"},
         "M&M": {"exchange": "NSE", "name": "M&M", "tp": 0.24, "sl": 0.15, "trail_act": 0.15, "trail_buf": 0.10},
         "ONGC": {"exchange": "NSE", "name": "ONGC", "tp": 0.25, "sl": 0.23, "trail_act": 0.09, "trail_buf": 0.05},
         "SBIN": {"exchange": "NSE", "name": "SBI", "tp": 0.26, "sl": 0.23, "trail_act": 0.14, "trail_buf": 0.06},
         "DIVISLAB": {"exchange": "NSE", "name": "Divi's Lab", "tp": 0.29, "sl": 0.16, "trail_act": 0.15, "trail_buf": 0.11},
         "POLYCAB": {"exchange": "NSE", "name": "Polycab", "tp": 0.30, "sl": 0.19, "trail_act": 0.17, "trail_buf": 0.09},
         "POWERGRID": {"exchange": "NSE", "name": "Power Grid", "tp": 0.25, "sl": 0.17, "trail_act": 0.14, "trail_buf": 0.08},
-        "WABAG": {"exchange": "NSE", "name": "VA Tech Wabag", "tp": 0.26, "sl": 0.16, "trail_act": 0.12, "trail_buf": 0.08},
+        "WABAG": {"exchange": "NSE", "name": "VA Tech Wabag", "tp": 0.18, "sl": 0.20, "trail_act": 0.09, "trail_buf": 0.06},
         "CDSL": {"exchange": "NSE", "name": "CDSL", "tp": 0.22, "sl": 0.18, "trail_act": 0.15, "trail_buf": 0.09},
         "KAYNES": {"exchange": "NSE", "name": "Kaynes Technology", "tp": 0.23, "sl": 0.13, "trail_act": 0.15, "trail_buf": 0.10},
         "PIIND": {"exchange": "NSE", "name": "PI Industries", "tp": 0.20, "sl": 0.17, "trail_act": 0.16, "trail_buf": 0.08},
@@ -302,9 +302,9 @@ def load_stocks_config():
         "NIFTY": {"exchange": "NSE", "name": "NIFTY50 Index", "tp": 0.21, "sl": 0.27, "trail_act": 0.10, "trail_buf": 0.07, "yf_ticker": "^NSEI"},
         "KEI": {"exchange": "NSE", "name": "KEI Industries Limited", "tp": 0.26, "sl": 0.20, "trail_act": 0.15, "trail_buf": 0.05, "yf_ticker": "KEI.NS"},
         "NAVINFLUOR": {"exchange": "NSE", "name": "Navin Fluorine International Limited", "tp": 0.19, "sl": 0.185, "trail_act": 0.10, "trail_buf": 0.07, "yf_ticker": "NAVINFLUOR.NS"},
-        "ZYDUSLIFE": {"exchange": "NSE", "name": "Zydus Lifesciences Limited", "tp": 0.18, "sl": 0.19, "trail_act": 0.08, "trail_buf": 0.06, "yf_ticker": "ZYDUSLIFE.NS"},
+        "ZYDUSLIFE": {"exchange": "NSE", "name": "Zydus Lifesciences Limited", "tp": 0.18, "sl": 0.26, "trail_act": 0.08, "trail_buf": 0.06, "yf_ticker": "ZYDUSLIFE.NS"},
         "AJANTPHARM": {"exchange": "NSE", "name": "Ajanta Pharma", "tp": 0.21, "sl": 0.24, "trail_act": 0.09, "trail_buf": 0.08, "yf_ticker": "AJANTPHARM.NS"},
-        "LUPIN": {"exchange": "NSE", "name": "Lupin Ltd", "tp": 0.15, "sl": 0.30, "trail_act": 0.12, "trail_buf": 0.11, "yf_ticker": "LUPIN.NS"},
+        "LUPIN": {"exchange": "NSE", "name": "Lupin Ltd", "tp": 0.28, "sl": 0.29, "trail_act": 0.12, "trail_buf": 0.08, "yf_ticker": "LUPIN.NS"},
         "RRKABEL": {"exchange": "NSE", "name": "RR Kabel Ltd", "tp": 0.10, "sl": 0.08, "trail_act": 0.08, "trail_buf": 0.06, "yf_ticker": "RRKABEL.NS"},
         "PRICOLLTD": {"exchange": "NSE", "name": "Pricol Ltd", "tp": 0.13, "sl": 0.17, "trail_act": 0.10, "trail_buf": 0.05, "yf_ticker": "PRICOLLTD.NS"},
         "THYROCARE": {"exchange": "NSE", "name": "Thyrocare", "tp": 0.15, "sl": 0.18, "trail_act": 0.08, "trail_buf": 0.04, "yf_ticker": "THYROCARE.NS"},
@@ -322,7 +322,8 @@ def load_stocks_config():
         "ASIANPAINT": {"exchange": "NSE", "name": "Asian Paints Ltd", "tp": 0.25, "sl": 0.28, "trail_act": 0.13, "trail_buf": 0.095, "probability": 0.9, "yf_ticker": "ASIANPAINT.NS"},
         "DRREDDY": {"exchange": "NSE", "name": "Dr Reddys Laboratories Ltd", "tp": 0.23, "sl": 0.29, "trail_act": 0.13, "trail_buf": 0.10, "probability": 0.84, "yf_ticker": "DRREDDY.NS"},
         "EICHERMOT": {"exchange": "NSE", "name": "Eicher Motors Limited", "tp": 0.20, "sl": 0.28, "trail_act": 0.16, "trail_buf": 0.13, "probability": 0.85, "yf_ticker": "EICHERMOT.NS"},
-        "TITAN": {"exchange": "NSE", "name": "Titan Company Limited", "tp": 0.22, "sl": 0.30, "trail_act": 0.12, "trail_buf": 0.11, "probability": 0.89, "yf_ticker": "TITAN.NS"}
+        "TITAN": {"exchange": "NSE", "name": "Titan Company Limited", "tp": 0.22, "sl": 0.30, "trail_act": 0.12, "trail_buf": 0.11, "probability": 0.89, "yf_ticker": "TITAN.NS"},
+        "MARKSANS": {"exchange": "NSE", "name": "Marksans Pharma Limited", "tp": 0.15, "sl": 0.22, "trail_act": 0.12, "trail_buf": 0.10, "probability": 0.73, "yf_ticker": "MARKSANS.NS"}
     }
 
 STOCKS = load_stocks_config()

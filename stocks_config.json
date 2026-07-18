@@ -164,11 +164,11 @@
     "BAJAJ_AUTO": {
         "exchange": "NSE",
         "name": "Bajaj Auto",
-        "tp": 0.26,
-        "sl": 0.19,
-        "trail_act": 0.14,
-        "trail_buf": 0.07,
-        "probability": 0.83,
+        "tp": 0.24,
+        "sl": 0.20,
+        "trail_act": 0.11,
+        "trail_buf": 0.08,
+        "probability": 0.89,
         "yf_ticker": "BAJAJ-AUTO.NS"
     },
     "M&M": {
@@ -228,11 +228,11 @@
     "WABAG": {
         "exchange": "NSE",
         "name": "VA Tech Wabag",
-        "tp": 0.26,
-        "sl": 0.16,
-        "trail_act": 0.12,
-        "trail_buf": 0.08,
-        "probability": 0.72
+        "tp": 0.18,
+        "sl": 0.20,
+        "trail_act": 0.09,
+        "trail_buf": 0.06,
+        "probability": 0.81
     },
     "CDSL": {
         "exchange": "NSE",
@@ -304,10 +304,10 @@
         "exchange": "NSE",
         "name": "Zydus Lifesciences Limited",
         "tp": 0.18,
-        "sl": 0.19,
+        "sl": 0.26,
         "trail_act": 0.08,
         "trail_buf": 0.06,
-        "probability": 0.82,
+        "probability": 0.86,
         "yf_ticker": "ZYDUSLIFE.NS"
     },
     "AJANTPHARM": {
@@ -323,11 +323,11 @@
     "LUPIN": {
         "exchange": "NSE",
         "name": "Lupin Ltd",
-        "tp": 0.15,
-        "sl": 0.30,
+        "tp": 0.28,
+        "sl": 0.29,
         "trail_act": 0.12,
-        "trail_buf": 0.11,
-        "probability": 0.87,
+        "trail_buf": 0.08,
+        "probability": 0.85,
         "yf_ticker": "LUPIN.NS"
     },
     "RRKABEL": {
@@ -509,5 +509,15 @@
         "trail_buf": 0.11,
         "probability": 0.89,
         "yf_ticker": "TITAN.NS"
+    },
+    "MARKSANS": {
+        "exchange": "NSE",
+        "name": "Marksans Pharma Limited",
+        "tp": 0.15,
+        "sl": 0.22,
+        "trail_act": 0.12,
+        "trail_buf": 0.10,
+        "probability": 0.73,
+        "yf_ticker": "MARKSANS.NS"
     }
 }
