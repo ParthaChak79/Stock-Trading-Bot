@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Wealth Builder — Automated NSE Trading Alerts on Telegram</title>
+<meta name="description" content="A Telegram bot that watches your NSE watchlist and sends automated MACD+SMA buy/sell signals, news sentiment, earnings surprises, and daily market briefs." />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <div class="brand">
+      <span class="brand-mark">AI</span>
+      AI Wealth Builder
+    </div>
+    <div class="nav-links">
+      <a href="#how-it-works">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#strategy">Strategy</a>
+      <a href="#schedule">Alert schedule</a>
+    </div>
+    <div class="nav-cta">
+      <a class="btn btn-primary" href="#features">See features</a>
+      <button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false">☰</button>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container hero-grid">
+    <div>
+      <div class="eyebrow">● Live on Telegram</div>
+      <h1>NSE trading signals, <span>delivered to your pocket.</span></h1>
+      <p class="hero-sub">
+        A Telegram bot that watches a continuously re-screened list of NSE stocks and sends automated
+        BUY/SELL alerts using the AI Wealth Builder strategy — MACD cooldown entries, SMA-50 trend
+        filtering, and a per-stock trailing-stop exit plan. No spreadsheets, no manual chart-watching.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#how-it-works">How it works</a>
+        <a class="btn btn-ghost" href="#strategy">View the strategy</a>
+      </div>
+      <div class="hero-meta">
+        <div>
+          <div class="stat-num">7</div>
+          <div class="stat-label">automated alert types</div>
+        </div>
+        <div>
+          <div class="stat-num">Hourly</div>
+          <div class="stat-label">signal checks during market hours</div>
+        </div>
+        <div>
+          <div class="stat-num">1</div>
+          <div class="stat-label">position per stock, long-only</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phone reveal">
+      <div class="phone-head">
+        <div class="phone-head-icon">AI</div>
+        <div>
+          <div class="phone-head-title">AI Wealth Builder</div>
+          <div class="phone-head-sub">Telegram bot</div>
+        </div>
+      </div>
+
+      <div class="bubble">
+        <span class="bubble-tag tag-buy">BUY SIGNAL</span>
+        <div class="bubble-row"><span>Stock</span><b>TITAN</b></div>
+        <div class="bubble-row"><span>Entry</span><b>₹3,412.50</b></div>
+        <div class="bubble-row"><span>Target (TP)</span><b>₹3,924.40</b></div>
+        <div class="bubble-row"><span>Stop-loss</span><b>₹2,935.75</b></div>
+        <div class="bubble-row"><span>Trail activates</span><b>+17% → locks at +8%</b></div>
+        <div class="bubble-row"><span>News sentiment</span><b>Positive</b></div>
+        <div class="bubble-time">9:41 AM</div>
+      </div>
+
+      <div class="bubble">
+        <span class="bubble-tag tag-news">BREAKING NEWS</span>
+        <div style="color: var(--text-dim); font-size: 12.5px;">Titan Q1 revenue beats estimates on jewellery demand</div>
+        <div class="bubble-time">10:15 AM</div>
+      </div>
+
+      <div class="bubble">
+        <span class="bubble-tag tag-sell">SELL SIGNAL</span>
+        <div class="bubble-row"><span>Stock</span><b>TITAN</b></div>
+        <div class="bubble-row"><span>Exit reason</span><b>Trailing stop</b></div>
+        <div class="bubble-row"><span>P&amp;L</span><b style="color:var(--buy)">+8.4%</b></div>
+        <div class="bubble-time">2:03 PM</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="how-it-works">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">Pipeline</div>
+      <h2 class="section-title">From market data to a decision in your pocket</h2>
+      <p class="section-lede">Everything runs on one always-on scheduler — no dashboards to check, no charts to babysit.</p>
+    </div>
+    <div class="steps">
+      <div class="step reveal">
+        <div class="step-num">01 · CURATE</div>
+        <h3>A watchlist that re-screens itself</h3>
+        <p>A weekly fundamental scoring pass ranks NSE names across financial quality, valuation, business strength, governance, and AI exposure — only names scoring ≥60 stay on the list.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">02 · ANALYZE</div>
+        <h3>Hourly MACD + SMA scan</h3>
+        <p>Every tracked stock is checked for a cooled-off MACD histogram combined with price trading above its SMA-50 trend filter.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">03 · MANAGE</div>
+        <h3>Pre-defined exit plan on every trade</h3>
+        <p>The moment a position opens, its take-profit, stop-loss, and trailing-stop levels are locked in — no emotional exits.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num">04 · NOTIFY</div>
+        <h3>Straight to Telegram</h3>
+        <p>Buy/sell alerts, breaking news, earnings surprises, and a daily pre-market brief — with optional WhatsApp mirroring.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features" class="container">
+  <div class="section-head reveal">
+    <div class="eyebrow">What you get</div>
+    <h2 class="section-title">Eight jobs, one Telegram feed</h2>
+    <p class="section-lede">Each feature runs as an independent scheduled check, so one data source having a bad day never takes the others down.</p>
+  </div>
+
+  <div class="features-grid">
+    <div class="card reveal">
+      <div class="card-icon">▲</div>
+      <h3>Buy &amp; sell trade alerts</h3>
+      <p>Entry, target, stop-loss, and trailing-stop plan the moment a signal fires — plus the exact P&amp;L when a position closes.</p>
+    </div>
+    <div class="card reveal">
+      <div class="card-icon">◧</div>
+      <h3>Portfolio tracking</h3>
+      <p>Active positions and closed-trade history are tracked automatically, with a full weekly report every Friday.</p>
+    </div>
+    <div class="card reveal">
+      <div class="card-icon">◉</div>
+      <h3>Breaking news, sentiment-tagged</h3>
+      <p>Real-time news on tracked stocks, deduplicated and scored positive/negative/neutral via FinBERT.</p>
+    </div>
+    <div class="card reveal">
+      <div class="card-icon">✓</div>
+      <h3>Earnings surprise alerts</h3>
+      <p>Actual vs. estimate on Revenue, Net Profit, and EPS the moment results are filed — labeled Beat / Miss / In-line.</p>
+    </div>
+    <div class="card reveal">
+      <div class="card-icon">!</div>
+      <h3>Market crash protection</h3>
+      <p>An immediate heads-up if the broader market drops sharply intraday, so you can review open positions early.</p>
+    </div>
+    <div class="card reveal">
+      <div class="card-icon">☀</div>
+      <h3>Daily pre-market brief</h3>
+      <p>GIFT Nifty setup, global cues, commodities &amp; FX, FII/DII flows, India VIX, and an overall bias — before the bell.</p>
+    </div>
+    <div class="card reveal">
+      <div class="card-icon">⟲</div>
+      <h3>Continuously curated universe</h3>
+      <p>A 30-parameter scoring engine re-ranks the watchlist weekly; decaying names drop off, strong new ones rise on.</p>
+    </div>
+    <div class="card reveal">
+      <div class="card-icon">↗</div>
+      <h3>Telegram + WhatsApp delivery</h3>
+      <p>Instant Telegram alerts by default, with optional WhatsApp mirroring for every message.</p>
+    </div>
+  </div>
+</section>
+
+<section id="strategy">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">The AI Wealth Builder strategy</div>
+      <h2 class="section-title">Rules-based entries, pre-defined exits</h2>
+      <p class="section-lede">Ported directly from the strategy's canonical TradingView Pine Script, and backtested per stock before it's added to the watchlist.</p>
+    </div>
+
+    <div class="strategy-grid">
+      <div class="strategy-card reveal">
+        <div class="strategy-card-head">
+          <span class="pill pill-entry">ENTRY</span>
+          <h3>Both conditions must be true</h3>
+        </div>
+        <ul class="condition-list">
+          <li><span class="check">✓</span><span><b>MACD cooldown</b> — the histogram falls within a defined min/max range, filtering out signals that are too hot or too cold.</span></li>
+          <li><span class="check">✓</span><span><b>SMA-50 trend filter</b> — price must trade above its 50-day moving average by a minimum threshold.</span></li>
+          <li><span class="check">✓</span><span><b>One position per stock</b> — no pyramiding into an existing trade.</span></li>
+        </ul>
+      </div>
+
+      <div class="strategy-card reveal">
+        <div class="strategy-card-head">
+          <span class="pill pill-exit">EXIT</span>
+          <h3>Whichever level is hit first</h3>
+        </div>
+        <ul class="condition-list">
+          <li><span class="check">✓</span><span><b>Take-profit</b> — a fixed % target above entry, tuned per stock.</span></li>
+          <li><span class="check">✓</span><span><b>Stop-loss</b> — a fixed % floor below entry to cap downside.</span></li>
+          <li><span class="check">✓</span><span><b>Trailing stop</b> — dormant until the trade's high reaches the activation level, then steps once to lock in gains and holds there.</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="schedule" class="container">
+  <div class="section-head reveal">
+    <div class="eyebrow">Delivery cadence</div>
+    <h2 class="section-title">When to expect an alert</h2>
+    <p class="section-lede">No alerts are sent outside NSE trading days.</p>
+  </div>
+
+  <div class="table-wrap reveal">
+    <table>
+      <thead>
+        <tr><th>Alert</th><th>When</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Pre-market brief</td><td>Every trading morning, before market open</td></tr>
+        <tr><td>Buy / sell trade alerts</td><td>Throughout market hours, as signals occur</td></tr>
+        <tr><td>Breaking news alerts</td><td>Throughout market hours, as news breaks</td></tr>
+        <tr><td>Earnings surprise alerts</td><td>As soon as a filing is detected</td></tr>
+        <tr><td>Market crash alert</td><td>Immediately if triggered</td></tr>
+        <tr><td>Missed-signal reminder</td><td>The next trading morning</td></tr>
+        <tr><td>Weekly portfolio report</td><td>Every Friday afternoon</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="stack">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">Under the hood</div>
+      <h2 class="section-title">Built on data sources chosen for reliability</h2>
+      <p class="section-lede">Every external dependency degrades gracefully — a blocked or rate-limited source skips its cycle instead of taking the bot down.</p>
+    </div>
+    <div class="stack-strip reveal">
+      <span class="chip">TradingView (tvdatafeed)</span>
+      <span class="chip">yfinance</span>
+      <span class="chip">TradingView Scanner API</span>
+      <span class="chip">NSE JSON APIs</span>
+      <span class="chip">FinBERT (HuggingFace)</span>
+      <span class="chip">Claude API — qualitative scoring</span>
+      <span class="chip">Telegram Bot API</span>
+      <span class="chip">Twilio WhatsApp (optional)</span>
+      <span class="chip">Python · pandas</span>
+    </div>
+  </div>
+</section>
+
+<section class="container">
+  <div class="disclaimer reveal">
+    <div class="mark">!</div>
+    <div>
+      <b>Not investment advice.</b> AI Wealth Builder is an automated, rules-based signal tool for informational
+      purposes only. Signals are generated from technical indicators and backtested parameters — they are not
+      a recommendation to buy or sell any security. Past strategy performance does not guarantee future results.
+      Markets carry risk of loss; do your own research and consult a qualified financial advisor before trading.
+    </div>
+  </div>
+</section>
+
+<footer class="container">
+  <div>AI Wealth Builder — automated NSE alerts on Telegram.</div>
+  <div>Not investment advice · For informational purposes only</div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

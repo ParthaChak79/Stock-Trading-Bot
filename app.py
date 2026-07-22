@@ -369,8 +369,10 @@ def save_seen_news(seen_links, seen_titles):
         print(f"Error saving seen_news: {e}")
 
 def load_seen_earnings():
-    """Load {ticker: last_alerted_release_epoch} so we only alert once per
-    reported quarter."""
+    """Load {ticker: {"epoch", "date", "alerted"}} so we only alert once per
+    reported quarter, and can tell a genuinely new release apart from
+    TradingView revising the same day's figures. Older entries may still be
+    a bare epoch int (pre-revision-tracking format); callers handle both."""
     if os.path.exists(SEEN_EARNINGS_FILE):
         try:
             with open(SEEN_EARNINGS_FILE, "r") as f:
@@ -1011,14 +1013,28 @@ def check_earnings_surprises():
             release_epoch = row.get("earnings_release_date")
             if not release_epoch:
                 continue
-            if seen.get(ticker) == release_epoch:
+
+            prev = seen.get(ticker)
+            if isinstance(prev, dict):
+                prev_epoch, prev_date, prev_alerted = prev.get("epoch"), prev.get("date"), prev.get("alerted", False)
+            else:
+                prev_epoch, prev_date, prev_alerted = prev, None, False  # legacy bare-epoch format
+
+            if prev_epoch == release_epoch:
                 continue  # already processed this exact release
 
             release_date = datetime.fromtimestamp(release_epoch, tz=timezone.utc).date()
+            # TradingView kept the release date but changed the timestamp/figures
+            # on a release we already alerted on -> a same-day revision, not a
+            # new quarter. Only counts if the original was actually alerted (not
+            # just silently seeded), so we don't resurface old, never-alerted data.
+            revised = prev_alerted and prev_date == release_date.isoformat()
+            alerted_this_cycle = False
 
             # Only alert on releases this recent so we don't spam old data the
             # first time this runs. Older releases are seeded as seen silently.
-            if (today - release_date).days <= EARNINGS_LOOKBACK_DAYS:
+            # A same-day revision always alerts, since we know it was alerted before.
+            if revised or (today - release_date).days <= EARNINGS_LOOKBACK_DAYS:
                 eps_actual = row.get("earnings_per_share_diluted_fq")
                 rev_actual = row.get("total_revenue_fq")
 
@@ -1028,16 +1044,18 @@ def check_earnings_surprises():
                     print(f"[Earnings] {ticker}: release detected but no data yet; will retry.")
                     continue
 
-                print(f"[Earnings] New results release for {ticker} ({symbol}), {release_date}")
-                msg = _build_surprise_alert(ticker, STOCKS[ticker], release_date, row)
+                kind = "Revised" if revised else "New"
+                print(f"[Earnings] {kind} results release for {ticker} ({symbol}), {release_date}")
+                msg = _build_surprise_alert(ticker, STOCKS[ticker], release_date, row, revised=revised)
 
                 if send_telegram_message(msg):
-                    print(f"[Earnings] Sent earnings alert for {ticker}")
+                    print(f"[Earnings] Sent {'revised ' if revised else ''}earnings alert for {ticker}")
+                    alerted_this_cycle = True
                 else:
                     print(f"[Earnings] Failed to send earnings alert for {ticker}; will retry next cycle.")
                     continue  # don't mark seen -> retry next cycle
 
-            seen[ticker] = release_epoch
+            seen[ticker] = {"epoch": release_epoch, "date": release_date.isoformat(), "alerted": alerted_this_cycle}
             changed = True
 
         if changed:
@@ -1046,7 +1064,7 @@ def check_earnings_surprises():
         # Never let this crash the scheduler loop.
         print(f"[Earnings] Unexpected error in check_earnings_surprises: {e}")
 
-def _build_surprise_alert(ticker, config, release_date, row):
+def _build_surprise_alert(ticker, config, release_date, row, revised=False):
     eps_actual = row.get("earnings_per_share_diluted_fq")
     eps_est = row.get("earnings_per_share_forecast_fq")
     eps_pct, eps_label = _surprise(eps_actual, eps_est)
@@ -1066,8 +1084,11 @@ def _build_surprise_alert(ticker, config, release_date, row):
 
     quarter_label = derive_quarter_label(release_date)
     q = f" ({quarter_label})" if quarter_label else ""
-    msg = f"━━━━━━━━━━━━━━━━━━━━━━\n📊 <b>EARNINGS ALERT: {config['name']}</b>{q}\n━━━━━━━━━━━━━━━━━━━━━━\n"
+    tag = "🔄 <b>REVISED EARNINGS ALERT" if revised else "📊 <b>EARNINGS ALERT"
+    msg = f"━━━━━━━━━━━━━━━━━━━━━━\n{tag}: {config['name']}</b>{q}\n━━━━━━━━━━━━━━━━━━━━━━\n"
     msg += f"🗓️ Reported: {release_date.strftime('%d %b %Y')}\n\n"
+    if revised:
+        msg += "⚠️ <i>TradingView revised these figures — this supersedes the earlier alert for this release.</i>\n\n"
     msg += rev_line + "\n"
     msg += eps_line + "\n\n"
     if overall:
