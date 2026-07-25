@@ -32,6 +32,19 @@ def backup_state_files():
             if not os.path.exists(dst):
                 shutil.copy2(src, dst)
 
+def fetch_tv_data_with_timeout(tv_instance, symbol, exchange, interval, n_bars, timeout=15):
+    import concurrent.futures
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(tv_instance.get_hist, symbol=symbol, exchange=exchange, interval=interval, n_bars=n_bars)
+        try:
+            return future.result(timeout=timeout)
+        except concurrent.futures.TimeoutError:
+            print(f"[Timeout] Network request to TradingView hung for {symbol}")
+            return None
+        except Exception as e:
+            print(f"[Error] Failed to fetch data for {symbol}: {e}")
+            return None
+
 import re
 import string
 import yfinance as yf
@@ -671,7 +684,7 @@ def send_holdings_report():
                 
             try:
                 # Fetch latest daily data to get current price
-                df = tv.get_hist(symbol=ticker, exchange=config['exchange'], interval=Interval.in_daily, n_bars=1)
+                df = fetch_tv_data_with_timeout(tv, symbol=ticker, exchange=config['exchange'], interval=Interval.in_daily, n_bars=1)
                 if df is not None and not df.empty:
                     current_price = df.iloc[-1]['close']
                 else:
@@ -1400,12 +1413,12 @@ def analyze_stocks():
     for ticker, config in STOCKS.items():
         try:
             # Fetch 200 bars of daily data from TradingView
-            df = tv.get_hist(symbol=ticker, exchange=config['exchange'], interval=Interval.in_daily, n_bars=200)
+            df = fetch_tv_data_with_timeout(tv, symbol=ticker, exchange=config['exchange'], interval=Interval.in_daily, n_bars=200)
             
             if df is None or df.empty:
                 print(f"Warning: No data fetched for {ticker}. Re-initializing TradingView connection and retrying...")
                 tv = TvDatafeed()
-                df = tv.get_hist(symbol=ticker, exchange=config['exchange'], interval=Interval.in_daily, n_bars=200)
+                df = fetch_tv_data_with_timeout(tv, symbol=ticker, exchange=config['exchange'], interval=Interval.in_daily, n_bars=200)
                 
             if df is None or df.empty:
                 print(f"No data fetched for {ticker}")
