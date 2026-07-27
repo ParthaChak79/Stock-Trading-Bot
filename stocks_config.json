@@ -343,11 +343,11 @@
     "PRICOLLTD": {
         "exchange": "NSE",
         "name": "Pricol Ltd",
-        "tp": 0.12,
-        "sl": 0.17,
-        "trail_act": 0.10,
-        "trail_buf": 0.05,
-        "probability": 0.73,
+        "tp": 0.21,
+        "sl": 0.22,
+        "trail_act": 0.11,
+        "trail_buf": 0.09,
+        "probability": 0.78,
         "yf_ticker": "PRICOLLTD.NS"
     },
     "THYROCARE": {

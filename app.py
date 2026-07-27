@@ -319,7 +319,7 @@ def load_stocks_config():
         "AJANTPHARM": {"exchange": "NSE", "name": "Ajanta Pharma", "tp": 0.21, "sl": 0.24, "trail_act": 0.09, "trail_buf": 0.08, "yf_ticker": "AJANTPHARM.NS"},
         "LUPIN": {"exchange": "NSE", "name": "Lupin Ltd", "tp": 0.28, "sl": 0.29, "trail_act": 0.12, "trail_buf": 0.08, "yf_ticker": "LUPIN.NS"},
         "RRKABEL": {"exchange": "NSE", "name": "RR Kabel Ltd", "tp": 0.10, "sl": 0.08, "trail_act": 0.08, "trail_buf": 0.06, "yf_ticker": "RRKABEL.NS"},
-        "PRICOLLTD": {"exchange": "NSE", "name": "Pricol Ltd", "tp": 0.13, "sl": 0.17, "trail_act": 0.10, "trail_buf": 0.05, "yf_ticker": "PRICOLLTD.NS"},
+        "PRICOLLTD": {"exchange": "NSE", "name": "Pricol Ltd", "tp": 0.21, "sl": 0.22, "trail_act": 0.11, "trail_buf": 0.09, "yf_ticker": "PRICOLLTD.NS"},
         "THYROCARE": {"exchange": "NSE", "name": "Thyrocare", "tp": 0.15, "sl": 0.18, "trail_act": 0.08, "trail_buf": 0.04, "yf_ticker": "THYROCARE.NS"},
         "SJS": {"exchange": "NSE", "name": "SJS Enterprises", "tp": 0.25, "sl": 0.14, "trail_act": 0.13, "trail_buf": 0.11, "probability": 0.75, "yf_ticker": "SJS.NS"},
         "NH": {"exchange": "NSE", "name": "Narayana Hrudayalaya Ltd", "tp": 0.23, "sl": 0.26, "trail_act": 0.12, "trail_buf": 0.09, "probability": 0.92, "yf_ticker": "NH.NS"},
