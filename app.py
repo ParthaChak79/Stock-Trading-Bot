@@ -125,9 +125,22 @@ def _keyword_sentiment(title, summary):
     title_text = title.lower()
     summary_text = (summary or '').lower()
 
-    # Weight title 2x
-    pos_count = sum(2 if word in title_text else 1 for word in POSITIVE_WORDS if word in title_text or word in summary_text)
-    neg_count = sum(2 if word in title_text else 1 for word in NEGATIVE_WORDS if word in title_text or word in summary_text)
+    pos_count = 0
+    neg_count = 0
+    
+    for word in POSITIVE_WORDS:
+        pattern = r'\b' + re.escape(word) + r'\b'
+        if re.search(pattern, title_text):
+            pos_count += 2
+        elif re.search(pattern, summary_text):
+            pos_count += 1
+            
+    for word in NEGATIVE_WORDS:
+        pattern = r'\b' + re.escape(word) + r'\b'
+        if re.search(pattern, title_text):
+            neg_count += 2
+        elif re.search(pattern, summary_text):
+            neg_count += 1
 
     if pos_count > neg_count:
         return "positive"
