@@ -7,7 +7,10 @@ import schedule
 import time
 
 import shutil
+import socket
 
+# Globally prevent ANY network request from hanging the bot forever
+socket.setdefaulttimeout(15)
 def atomic_save_json(data, filepath):
     tmp_path = filepath + ".tmp"
     try:
