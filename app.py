@@ -5,6 +5,8 @@ import requests
 import feedparser
 import schedule
 import time
+import threading
+import traceback
 
 import shutil
 import socket
@@ -1564,43 +1566,63 @@ def analyze_stocks():
         except Exception as e:
             print(f"Error processing {ticker}: {e}")
 
+def run_threaded(job_func):
+    job_thread = threading.Thread(target=job_func)
+    job_thread.start()
+
 def run_scheduler():
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Telegram Trading Bot Started!")
-    send_telegram_message("🚀 <b>Trading Bot:</b> app updated and ready")
+    send_telegram_message("🚀 <b>Trading Bot:</b> app updated and ready (Production Mode)")
     
     # Run once immediately on startup
-    analyze_stocks()
-    check_news_stream()
-    check_earnings_surprises()
-    check_market_crash()
+    run_threaded(analyze_stocks)
+    run_threaded(check_news_stream)
+    run_threaded(check_earnings_surprises)
+    run_threaded(check_market_crash)
 
     # Schedule trading check every hour
-    schedule.every(1).hours.do(analyze_stocks)
+    schedule.every(1).hours.do(run_threaded, analyze_stocks)
 
     # Schedule breaking news check every 30 minutes
-    schedule.every(30).minutes.do(check_news_stream)
+    schedule.every(30).minutes.do(run_threaded, check_news_stream)
 
     # Schedule market-crash check every 5 minutes (needs to catch sudden drops fast)
-    schedule.every(5).minutes.do(check_market_crash)
+    schedule.every(5).minutes.do(run_threaded, check_market_crash)
 
     # Schedule earnings-surprise filing check every 15 minutes (to catch
     # results filings quickly during market hours)
-    schedule.every(15).minutes.do(check_earnings_surprises)
+    schedule.every(15).minutes.do(run_threaded, check_earnings_surprises)
     
     # Schedule pre-market report daily at 9:08 AM IST (Asia/Kolkata)
-    schedule.every().day.at("09:08", "Asia/Kolkata").do(send_pre_market_report)
+    schedule.every().day.at("09:08", "Asia/Kolkata").do(run_threaded, send_pre_market_report)
     
     # Schedule weekly holdings report every Friday at 4:00 PM IST (Asia/Kolkata)
-    schedule.every().friday.at("16:00", "Asia/Kolkata").do(send_holdings_report)
+    schedule.every().friday.at("16:00", "Asia/Kolkata").do(run_threaded, send_holdings_report)
     
     print("\nScheduler running. Press Ctrl+C to exit.\n")
+    healthcheck_url = os.getenv("HEALTHCHECK_URL")
+    
     while True:
         try:
             schedule.run_pending()
+            
+            # Ping Healthchecks.io if configured
+            if healthcheck_url:
+                try:
+                    requests.get(healthcheck_url, timeout=5)
+                except Exception as e:
+                    print(f"Healthcheck ping failed: {e}")
+                    
             time.sleep(60)
+            
         except KeyboardInterrupt:
             print("\nExiting bot gracefully...")
             break
+        except Exception as e:
+            err_msg = f"🚨 <b>BOT LOOP CRASHED</b> 🚨\n\n<pre>{traceback.format_exc()}</pre>"
+            send_telegram_message(err_msg)
+            print(f"Fatal error in scheduler loop: {e}")
+            time.sleep(60) # Prevent rapid-fire spam if loop constantly crashes
 
 if __name__ == "__main__":
     run_scheduler()
