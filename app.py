@@ -679,6 +679,19 @@ def check_and_send_reminders():
         save_reminders(reminders)
 
 def send_holdings_report():
+    for attempt in range(1, 4):
+        try:
+            _send_holdings_report_internal()
+            return
+        except Exception as e:
+            print(f"Error in send_holdings_report (Attempt {attempt}): {e}")
+            if attempt < 3:
+                print("Retrying in 1 hour...")
+                time.sleep(3600)
+            else:
+                send_telegram_message(f"🚨 <b>Failed to generate weekly report after 3 attempts</b>\n\n<pre>{e}</pre>")
+
+def _send_holdings_report_internal():
     print(f"\n[{datetime.now(IST).strftime('%Y-%m-%d %H:%M:%S')}] Generating weekly holdings report...")
     state = load_state()
     closed_trades = load_closed_trades()
