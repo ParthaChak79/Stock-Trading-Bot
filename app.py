@@ -1592,6 +1592,8 @@ def run_scheduler():
     run_threaded(check_news_stream)
     run_threaded(check_earnings_surprises)
     run_threaded(check_market_crash)
+    if datetime.now(IST).weekday() == 4: # 4 = Friday
+        run_threaded(send_holdings_report)
 
     # Schedule trading check every hour
     schedule.every(1).hours.do(run_threaded, analyze_stocks)
