@@ -1,0 +1,42 @@
+[
+    {
+        "ticker": "NATCOPHARM",
+        "name": "Natco Pharma",
+        "entry_price": 1179.9,
+        "exit_price": 908.5,
+        "entry_date": "19 May 2026",
+        "exit_date": "03 Jun 2026",
+        "pnl_pct": -23.0,
+        "reason": "Stop Loss Hit"
+    },
+    {
+        "ticker": "WABAG",
+        "name": "VA Tech Wabag",
+        "entry_price": 1463.4,
+        "exit_price": 1851.8,
+        "entry_date": "26 May 2026",
+        "exit_date": "19 Jun 2026",
+        "pnl_pct": 26.54,
+        "reason": "Target/Trail"
+    },
+    {
+        "ticker": "ZYDUSLIFE",
+        "name": "Zydus Lifesciences Limited",
+        "entry_price": 1070.8,
+        "exit_price": 1133.7,
+        "entry_date": "Unknown",
+        "exit_date": "13 Jul 2026",
+        "pnl_pct": 5.87,
+        "reason": "\ud83c\udfaf TRAILING STOP Hit at \u20b91133.70 (Locked in +6.00% Buffer)"
+    },
+    {
+        "ticker": "DIXON",
+        "name": "Dixon Tech",
+        "entry_price": 11384.0,
+        "exit_price": 14496.0,
+        "entry_date": "Unknown",
+        "exit_date": "16 Jul 2026",
+        "pnl_pct": 27.34,
+        "reason": "\ud83c\udfaf TAKE PROFIT Hit at \u20b914496.00"
+    }
+]

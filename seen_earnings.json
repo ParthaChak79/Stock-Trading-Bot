@@ -6,7 +6,11 @@
     "TORNTPOWER": 1778586660,
     "PIDILITIND": 1778155200,
     "NATCOPHARM": 1780056000,
-    "TVSMOTOR": 1778659500,
+    "TVSMOTOR": {
+        "epoch": 1784623020,
+        "date": "2026-07-21",
+        "alerted": false
+    },
     "BEL": 1779129000,
     "GODREJCP": 1778064540,
     "SCHNEIDER": 1779969600,
@@ -14,8 +18,16 @@
     "MAXHEALTH": 1779301800,
     "LT": 1778009820,
     "HAL": 1778761980,
-    "HDFCBANK": 1776504780,
-    "ICICIBANK": 1776504720,
+    "HDFCBANK": {
+        "epoch": 1784365020,
+        "date": "2026-07-18",
+        "alerted": false
+    },
+    "ICICIBANK": {
+        "epoch": 1784364720,
+        "date": "2026-07-18",
+        "alerted": false
+    },
     "DIXON": 1778524200,
     "M&M": 1777963920,
     "ONGC": 1779808860,
@@ -35,12 +47,20 @@
     "LUPIN": 1778092200,
     "RRKABEL": 1777550400,
     "PRICOLLTD": 1778760000,
-    "THYROCARE": 1778155200,
+    "THYROCARE": {
+        "epoch": 1784802120,
+        "date": "2026-07-23",
+        "alerted": false
+    },
     "SJS": 1777978260,
     "NH": 1779466740,
     "CAPLIPOINT": 1778744760,
     "MEDANTA": 1778757540,
-    "WAAREERTL": 1776340800,
+    "WAAREERTL": {
+        "epoch": 1784721600,
+        "date": "2026-07-22",
+        "alerted": false
+    },
     "NEULANDLAB": 1778582880,
     "GRSE": 1777383240,
     "SHAILY": 1779193320,
@@ -48,7 +68,16 @@
     "MCX": 1778254260,
     "MARUTI": 1777367460,
     "ASIANPAINT": 1780089600,
-    "DRREDDY": 1778524200,
+    "DRREDDY": {
+        "epoch": 1784658600,
+        "date": "2026-07-21",
+        "alerted": false
+    },
     "EICHERMOT": 1779451200,
-    "TITAN": 1778241600
+    "TITAN": 1778241600,
+    "MARKSANS": {
+        "epoch": 1779796800,
+        "date": "2026-05-26",
+        "alerted": false
+    }
 }
