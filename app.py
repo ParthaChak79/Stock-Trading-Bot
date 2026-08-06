@@ -357,7 +357,9 @@ def load_stocks_config():
         "MARKSANS": {"exchange": "NSE", "name": "Marksans Pharma Limited", "tp": 0.15, "sl": 0.22, "trail_act": 0.12, "trail_buf": 0.10, "probability": 0.73, "yf_ticker": "MARKSANS.NS"},
         "HINDZINC": {"exchange": "NSE", "name": "Hindustan Zinc", "tp": 0.17, "sl": 0.24, "trail_act": 0.14, "trail_buf": 0.11, "probability": 0.77, "yf_ticker": "HINDZINC.NS"},
         "LUMAXIND": {"exchange": "NSE", "name": "Lumax Industries Limited", "tp": 0.18, "sl": 0.21, "trail_act": 0.12, "trail_buf": 0.08, "probability": 0.73, "yf_ticker": "LUMAXIND.NS"},
-        "PRIVISCL": {"exchange": "NSE", "name": "Privi Speciality Chemicals", "tp": 0.21, "sl": 0.25, "trail_act": 0.15, "trail_buf": 0.08, "probability": 0.86, "yf_ticker": "PRIVISCL.NS"}
+        "PRIVISCL": {"exchange": "NSE", "name": "Privi Speciality Chemicals", "tp": 0.21, "sl": 0.25, "trail_act": 0.15, "trail_buf": 0.08, "probability": 0.86, "yf_ticker": "PRIVISCL.NS"},
+        "FIEMIND": {"exchange": "NSE", "name": "Fiem Industries Limited", "tp": 0.19, "sl": 0.19, "trail_act": 0.15, "trail_buf": 0.10, "probability": 0.73, "yf_ticker": "FIEMIND.NS"},
+        "ULTRACEMCO": {"exchange": "NSE", "name": "UltraTech Cement Limited", "tp": 0.18, "sl": 0.23, "trail_act": 0.13, "trail_buf": 0.10, "probability": 0.84, "yf_ticker": "ULTRACEMCO.NS"}
     }
 
 STOCKS = load_stocks_config()
