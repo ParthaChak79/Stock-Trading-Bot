@@ -569,5 +569,15 @@
         "trail_buf": 0.10,
         "probability": 0.84,
         "yf_ticker": "ULTRACEMCO.NS"
+    },
+    "GRANULES": {
+        "exchange": "NSE",
+        "name": "Granules India Limited",
+        "tp": 0.22,
+        "sl": 0.37,
+        "trail_act": 0.18,
+        "trail_buf": 0.15,
+        "probability": 0.89,
+        "yf_ticker": "GRANULES.NS"
     }
 }
