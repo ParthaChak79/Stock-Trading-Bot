@@ -360,7 +360,8 @@ def load_stocks_config():
         "PRIVISCL": {"exchange": "NSE", "name": "Privi Speciality Chemicals", "tp": 0.21, "sl": 0.25, "trail_act": 0.15, "trail_buf": 0.08, "probability": 0.86, "yf_ticker": "PRIVISCL.NS"},
         "FIEMIND": {"exchange": "NSE", "name": "Fiem Industries Limited", "tp": 0.19, "sl": 0.19, "trail_act": 0.15, "trail_buf": 0.10, "probability": 0.73, "yf_ticker": "FIEMIND.NS"},
         "ULTRACEMCO": {"exchange": "NSE", "name": "UltraTech Cement Limited", "tp": 0.18, "sl": 0.23, "trail_act": 0.13, "trail_buf": 0.10, "probability": 0.84, "yf_ticker": "ULTRACEMCO.NS"},
-        "GRANULES": {"exchange": "NSE", "name": "Granules India Limited", "tp": 0.22, "sl": 0.37, "trail_act": 0.18, "trail_buf": 0.15, "probability": 0.89, "yf_ticker": "GRANULES.NS"}
+        "GRANULES": {"exchange": "NSE", "name": "Granules India Limited", "tp": 0.22, "sl": 0.37, "trail_act": 0.18, "trail_buf": 0.15, "probability": 0.89, "yf_ticker": "GRANULES.NS"},
+        "KPIL": {"exchange": "NSE", "name": "Kalpataru Projects International Limited", "tp": 0.20, "sl": 0.35, "trail_act": 0.17, "trail_buf": 0.15, "probability": 0.85, "yf_ticker": "KPIL.NS"}
     }
 
 STOCKS = load_stocks_config()

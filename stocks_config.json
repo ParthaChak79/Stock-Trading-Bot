@@ -579,5 +579,15 @@
         "trail_buf": 0.15,
         "probability": 0.89,
         "yf_ticker": "GRANULES.NS"
+    },
+    "KPIL": {
+        "exchange": "NSE",
+        "name": "Kalpataru Projects International Limited",
+        "tp": 0.20,
+        "sl": 0.35,
+        "trail_act": 0.17,
+        "trail_buf": 0.15,
+        "probability": 0.85,
+        "yf_ticker": "KPIL.NS"
     }
 }
