@@ -1,0 +1,177 @@
+Initializing TradingView Connection...
+Fetching current prices and generating report. This might take a moment...
+
+
+[2026-08-08 12:07:07] Generating weekly holdings report...
+━━━━━━━━━━━━━━━━━━━━━━
+📊 <b>Weekly Portfolio Report (Buy Signals - The Last 3 Months)</b>
+━━━━━━━━━━━━━━━━━━━━━━
+
+🟩 <b>Active Holdings</b>
+• <b>EPL (EPL)</b>
+  📅 Entry Date: 15 May 2026
+  🚪 Entry Price: ₹215.29
+  💵 Current Price: ₹224.72
+  📊 P&L: 🟢 <b>+4.38%</b>
+
+• <b>Fortis Healthcare (FORTIS)</b>
+  📅 Entry Date: 18 May 2026
+  🚪 Entry Price: ₹962.15
+  💵 Current Price: ₹955.15
+  📊 P&L: 🔴 <b>-0.73%</b>
+
+• <b>Bajaj Auto (BAJAJ_AUTO)</b>
+  📅 Entry Date: 22 May 2026
+  🚪 Entry Price: ₹10549.50
+  💵 Current Price: ₹11662.00
+  📊 P&L: 🟢 <b>+10.55%</b>
+
+• <b>ONGC (ONGC)</b>
+  📅 Entry Date: 22 May 2026
+  🚪 Entry Price: ₹290.00
+  💵 Current Price: ₹238.85
+  📊 P&L: 🔴 <b>-17.64%</b>
+
+• <b>Schneider Electric Infrastructure (SCHNEIDER)</b>
+  📅 Entry Date: 25 May 2026
+  🚪 Entry Price: ₹1328.00
+  💵 Current Price: ₹1354.80
+  📊 P&L: 🟢 <b>+2.02%</b>
+
+• <b>Max Healthcare (MAXHEALTH)</b>
+  📅 Entry Date: 25 May 2026
+  🚪 Entry Price: ₹1019.60
+  💵 Current Price: ₹1070.00
+  📊 P&L: 🟢 <b>+4.94%</b>
+
+• <b>Divi's Lab (DIVISLAB)</b>
+  📅 Entry Date: 25 May 2026
+  🚪 Entry Price: ₹6891.00
+  💵 Current Price: ₹8275.00
+  📊 P&L: 🟢 <b>+20.08%</b>
+
+• <b>Larsen & Toubro (LT)</b>
+  📅 Entry Date: 25 May 2026
+  🚪 Entry Price: ₹4022.20
+  💵 Current Price: ₹4056.00
+  📊 P&L: 🟢 <b>+0.84%</b>
+
+• <b>Pidilite (PIDILITIND)</b>
+  📅 Entry Date: 25 May 2026
+  🚪 Entry Price: ₹1474.00
+  💵 Current Price: ₹1660.00
+  📊 P&L: 🟢 <b>+12.62%</b>
+
+• <b>Apollo Hospitals (APOLLOHOSP)</b>
+  📅 Entry Date: 17 Jul 2026
+  🚪 Entry Price: ₹8826.00
+  💵 Current Price: ₹8945.00
+  📊 P&L: 🟢 <b>+1.35%</b>
+
+• <b>Bharti Airtel (BHARTIARTL)</b>
+  📅 Entry Date: 17 Jul 2026
+  🚪 Entry Price: ₹1908.80
+  💵 Current Price: ₹1959.90
+  📊 P&L: 🟢 <b>+2.68%</b>
+
+• <b>TVS Motors (TVSMOTOR)</b>
+  📅 Entry Date: 17 Jul 2026
+  🚪 Entry Price: ₹3618.20
+  💵 Current Price: ₹4440.90
+  📊 P&L: 🟢 <b>+22.74%</b>
+
+• <b>Godrej Consumer Products (GODREJCP)</b>
+  📅 Entry Date: 17 Jul 2026
+  🚪 Entry Price: ₹1071.90
+  💵 Current Price: ₹1050.00
+  📊 P&L: 🔴 <b>-2.04%</b>
+
+• <b>HDFC Bank (HDFCBANK)</b>
+  📅 Entry Date: 17 Jul 2026
+  🚪 Entry Price: ₹819.60
+  💵 Current Price: ₹731.00
+  📊 P&L: 🔴 <b>-10.81%</b>
+
+• <b>ICICI Bank (ICICIBANK)</b>
+  📅 Entry Date: 17 Jul 2026
+  🚪 Entry Price: ₹1444.30
+  💵 Current Price: ₹1421.00
+  📊 P&L: 🔴 <b>-1.61%</b>
+
+• <b>M&M (M&M)</b>
+  📅 Entry Date: 17 Jul 2026
+  🚪 Entry Price: ₹3179.20
+  💵 Current Price: ₹3502.00
+  📊 P&L: 🟢 <b>+10.15%</b>
+
+• <b>SBI (SBIN)</b>
+  📅 Entry Date: 17 Jul 2026
+  🚪 Entry Price: ₹1044.30
+  💵 Current Price: ₹1097.20
+  📊 P&L: 🟢 <b>+5.07%</b>
+
+• <b>NIFTY50 Index (NIFTY)</b>
+  📅 Entry Date: 17 Jul 2026
+  🚪 Entry Price: ₹24334.30
+  💵 Current Price: ₹24570.65
+  📊 P&L: 🟢 <b>+0.97%</b>
+
+• <b>Zydus Lifesciences Limited (ZYDUSLIFE)</b>
+  📅 Entry Date: 17 Jul 2026
+  🚪 Entry Price: ₹1143.70
+  💵 Current Price: ₹1114.20
+  📊 P&L: 🔴 <b>-2.58%</b>
+
+• <b>Lupin Ltd (LUPIN)</b>
+  📅 Entry Date: 17 Jul 2026
+  🚪 Entry Price: ₹2443.20
+  💵 Current Price: ₹2363.50
+  📊 P&L: 🔴 <b>-3.26%</b>
+
+• <b>Pricol Ltd (PRICOLLTD)</b>
+  📅 Entry Date: 17 Jul 2026
+  🚪 Entry Price: ₹615.30
+  💵 Current Price: ₹737.90
+  📊 P&L: 🟢 <b>+19.93%</b>
+
+• <b>Global Health Limited (Medanta) (MEDANTA)</b>
+  📅 Entry Date: 17 Jul 2026
+  🚪 Entry Price: ₹1316.90
+  💵 Current Price: ₹1455.60
+  📊 P&L: 🟢 <b>+10.53%</b>
+
+• <b>Ajanta Pharma (AJANTPHARM)</b>
+  📅 Entry Date: 24 Jul 2026
+  🚪 Entry Price: ₹3369.50
+  💵 Current Price: ₹3489.20
+  📊 P&L: 🟢 <b>+3.55%</b>
+
+• <b>Thyrocare (THYROCARE)</b>
+  📅 Entry Date: 24 Jul 2026
+  🚪 Entry Price: ₹564.25
+  💵 Current Price: ₹603.25
+  📊 P&L: 🟢 <b>+6.91%</b>
+
+━━━━━━━━━━━━━━━━━━━━━━
+🟥 <b>Recent Exits (Last 3 Months)</b>
+━━━━━━━━━━━━━━━━━━━━━━
+
+• <b>Natco Pharma (NATCOPHARM)</b>
+  📅 Held: 19 May 2026 to 03 Jun 2026
+  🚪 Entry: ₹1179.90 | Exit: ₹908.50
+  📊 Realized P&L: 🔴 <b>-23.00%</b> (Stop Loss Hit)
+
+• <b>VA Tech Wabag (WABAG)</b>
+  📅 Held: 26 May 2026 to 19 Jun 2026
+  🚪 Entry: ₹1463.40 | Exit: ₹1851.80
+  📊 Realized P&L: 🟢 <b>+26.54%</b> (Target/Trail)
+
+• <b>Zydus Lifesciences Limited (ZYDUSLIFE)</b>
+  📅 Held: Unknown to 13 Jul 2026
+  🚪 Entry: ₹1070.80 | Exit: ₹1133.70
+  📊 Realized P&L: 🟢 <b>+5.87%</b> (🎯 TRAILING STOP Hit at ₹1133.70 (Locked in +6.00% Buffer))
+
+• <b>Dixon Tech (DIXON)</b>
+  📅 Held: Unknown to 16 Jul 2026
+  🚪 Entry: ₹11384.00 | Exit: ₹14496.00
+  📊 Realized P&L: 🟢 <b>+27.34%</b> (🎯 TAKE PROFIT Hit at ₹14496.00)

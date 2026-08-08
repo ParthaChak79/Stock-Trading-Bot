@@ -589,5 +589,15 @@
         "trail_buf": 0.15,
         "probability": 0.85,
         "yf_ticker": "KPIL.NS"
+    },
+    "SANDUMA": {
+        "exchange": "NSE",
+        "name": "Sandur Manganese & Iron Ores",
+        "tp": 0.17,
+        "sl": 0.19,
+        "trail_act": 0.10,
+        "trail_buf": 0.08,
+        "probability": 0.76,
+        "yf_ticker": "SANDUMA.NS"
     }
 }
