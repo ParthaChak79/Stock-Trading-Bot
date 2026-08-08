@@ -778,7 +778,22 @@ def _send_holdings_report_internal():
                 f"  📊 Realized P&L: {pnl_emoji} <b>{pnl_sign}{pnl_pct:.2f}%</b> ({reason_clean})"
             )
             
-    send_telegram_message("\n".join(msg_lines))
+    # Send in chunks to avoid Telegram 4096 char limit
+    current_chunk = []
+    current_len = 0
+    for line in msg_lines:
+        line_len = len(line) + 1 # +1 for newline
+        if current_len + line_len > 3800:
+            send_telegram_message("\n".join(current_chunk))
+            current_chunk = [line]
+            current_len = line_len
+            time.sleep(1) # small delay between messages
+        else:
+            current_chunk.append(line)
+            current_len += line_len
+            
+    if current_chunk:
+        send_telegram_message("\n".join(current_chunk))
 
 def get_news(stock_name, ticker=None):
     """Fetch top 2 recent news articles for the stock (for trade alerts)"""
