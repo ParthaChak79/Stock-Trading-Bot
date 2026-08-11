@@ -639,5 +639,15 @@
         "trail_buf": 0.10,
         "probability": 0.86,
         "yf_ticker": "ALKEM.NS"
+    },
+    "FINEORG": {
+        "exchange": "NSE",
+        "name": "Fine Organic Industries Ltd",
+        "tp": 0.21,
+        "sl": 0.24,
+        "trail_act": 0.14,
+        "trail_buf": 0.06,
+        "probability": 0.91,
+        "yf_ticker": "FINEORG.NS"
     }
 }
