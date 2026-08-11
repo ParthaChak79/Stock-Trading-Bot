@@ -615,9 +615,29 @@
         "name": "Dr. Lal PathLabs Limited",
         "tp": 0.31,
         "sl": 0.16,
-        "trail_act": 0.22,
-        "trail_buf": 0.14,
-        "probability": 0.68,
+        "trail_act": 0.21,
+        "trail_buf": 0.06,
+        "probability": 0.72,
         "yf_ticker": "LALPATHLAB.NS"
+    },
+    "STAR": {
+        "exchange": "NSE",
+        "name": "Strides Pharma Science Ltd",
+        "tp": 0.22,
+        "sl": 0.23,
+        "trail_act": 0.16,
+        "trail_buf": 0.09,
+        "probability": 0.70,
+        "yf_ticker": "STAR.NS"
+    },
+    "ALKEM": {
+        "exchange": "NSE",
+        "name": "Alkem Laboratories Ltd",
+        "tp": 0.23,
+        "sl": 0.25,
+        "trail_act": 0.17,
+        "trail_buf": 0.10,
+        "probability": 0.86,
+        "yf_ticker": "ALKEM.NS"
     }
 }
