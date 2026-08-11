@@ -609,5 +609,15 @@
         "trail_buf": 0.11,
         "probability": 0.93,
         "yf_ticker": "JSLL.NS"
+    },
+    "LALPATHLAB": {
+        "exchange": "NSE",
+        "name": "Dr. Lal PathLabs Limited",
+        "tp": 0.31,
+        "sl": 0.16,
+        "trail_act": 0.22,
+        "trail_buf": 0.14,
+        "probability": 0.68,
+        "yf_ticker": "LALPATHLAB.NS"
     }
 }
