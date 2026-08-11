@@ -599,5 +599,15 @@
         "trail_buf": 0.08,
         "probability": 0.76,
         "yf_ticker": "SANDUMA.NS"
+    },
+    "JSLL": {
+        "exchange": "NSE",
+        "name": "Jeena Sikho Lifecare Limited",
+        "tp": 0.19,
+        "sl": 0.26,
+        "trail_act": 0.13,
+        "trail_buf": 0.11,
+        "probability": 0.93,
+        "yf_ticker": "JSLL.NS"
     }
 }

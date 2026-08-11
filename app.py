@@ -362,7 +362,8 @@ def load_stocks_config():
         "ULTRACEMCO": {"exchange": "NSE", "name": "UltraTech Cement Limited", "tp": 0.18, "sl": 0.23, "trail_act": 0.13, "trail_buf": 0.10, "probability": 0.84, "yf_ticker": "ULTRACEMCO.NS"},
         "GRANULES": {"exchange": "NSE", "name": "Granules India Limited", "tp": 0.22, "sl": 0.37, "trail_act": 0.18, "trail_buf": 0.15, "probability": 0.89, "yf_ticker": "GRANULES.NS"},
         "KPIL": {"exchange": "NSE", "name": "Kalpataru Projects International Limited", "tp": 0.20, "sl": 0.35, "trail_act": 0.17, "trail_buf": 0.15, "probability": 0.85, "yf_ticker": "KPIL.NS"},
-        "SANDUMA": {"exchange": "NSE", "name": "Sandur Manganese & Iron Ores", "tp": 0.17, "sl": 0.19, "trail_act": 0.10, "trail_buf": 0.08, "probability": 0.76, "yf_ticker": "SANDUMA.NS"}
+        "SANDUMA": {"exchange": "NSE", "name": "Sandur Manganese & Iron Ores", "tp": 0.17, "sl": 0.19, "trail_act": 0.10, "trail_buf": 0.08, "probability": 0.76, "yf_ticker": "SANDUMA.NS"},
+        "JSLL": {"exchange": "NSE", "name": "Jeena Sikho Lifecare Limited", "tp": 0.19, "sl": 0.26, "trail_act": 0.13, "trail_buf": 0.11, "probability": 0.93, "yf_ticker": "JSLL.NS"}
     }
 
 STOCKS = load_stocks_config()
