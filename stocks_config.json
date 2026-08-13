@@ -649,5 +649,15 @@
         "trail_buf": 0.06,
         "probability": 0.91,
         "yf_ticker": "FINEORG.NS"
+    },
+    "NESTLEIND": {
+        "exchange": "NSE",
+        "name": "Nestle India Ltd",
+        "tp": 0.23,
+        "sl": 0.22,
+        "trail_act": 0.15,
+        "trail_buf": 0.11,
+        "probability": 0.95,
+        "yf_ticker": "NESTLEIND.NS"
     }
 }
