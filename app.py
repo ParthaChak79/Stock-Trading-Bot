@@ -575,6 +575,23 @@ def send_telegram_message(message):
         return False
 
 MARKET_CRASH_STATE_FILE = os.path.join(BASE_DIR, "market_crash_state.json")
+HOLDINGS_CRASH_STATE_FILE = os.path.join(BASE_DIR, "holdings_crash_state.json")
+
+def load_holdings_crash_state():
+    if os.path.exists(HOLDINGS_CRASH_STATE_FILE):
+        try:
+            with open(HOLDINGS_CRASH_STATE_FILE, "r") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"Error loading holdings_crash_state.json: {e}")
+    return {}
+
+def save_holdings_crash_state(state):
+    try:
+        with open(HOLDINGS_CRASH_STATE_FILE, "w") as f:
+            json.dump(state, f, indent=4)
+    except Exception as e:
+        print(f"Error saving holdings_crash_state.json: {e}")
 
 def load_market_crash_state():
     if os.path.exists(MARKET_CRASH_STATE_FILE):
@@ -634,6 +651,65 @@ def check_market_crash():
             print(f"[Market Crash] NIFTY change: {pct_change:.2f}% (threshold {MARKET_CRASH_PCT:.2f}%)")
     except Exception as e:
         print(f"[Market Crash] Error checking NIFTY: {e}")
+
+def check_holdings_crash():
+    """Alert once per day if any active holding drops 10% or more from ANY of its last 5 daily closes."""
+    today = datetime.now(IST).date()
+    if is_market_closed(today):
+        return
+
+    today_str = today.strftime("%Y-%m-%d")
+    crash_state = load_holdings_crash_state()
+    state = load_state()
+    
+    if not state:
+        return
+        
+    tv = TvDatafeed()
+    
+    for ticker, info in state.items():
+        symbol = info["symbol"]
+        exchange = info["exchange"]
+        
+        # Check if already alerted for this stock today
+        if crash_state.get(ticker) == today_str:
+            continue
+            
+        try:
+            # Fetch last 6 daily bars (5 previous + 1 current/live)
+            bars = tv.get_hist(symbol=symbol, exchange=exchange, interval=Interval.in_daily, n_bars=6)
+            if bars is None or len(bars) < 2:
+                continue
+                
+            # Separate previous days' closes from the current live price
+            prev_closes = bars['close'].iloc[:-1].tolist()
+            current_price = bars['close'].iloc[-1]
+            
+            if not prev_closes:
+                continue
+                
+            max_prev_close = max(prev_closes)
+            
+            # If current price is 10% or more below the highest close of the last 1-5 days
+            if current_price <= 0.90 * max_prev_close:
+                pct_change = ((current_price - max_prev_close) / max_prev_close) * 100
+                
+                msg = f"━━━━━━━━━━━━━━━━━━━━━━\n🚨 <b>SUDDEN DROP ALERT</b> 🚨\n━━━━━━━━━━━━━━━━━━━━━━\n"
+                msg += f"📉 <b>{symbol}</b> has dropped <b>{abs(pct_change):.2f}%</b> from its recent close.\n\n"
+                msg += f"🔹 Recent Peak Close: ₹{max_prev_close:,.2f}\n"
+                msg += f"🔹 Current Price: ₹{current_price:,.2f}\n\n"
+                msg += f"⚠️ Stock has fallen 10% or more in a 1-5 day window. Review your position.\n"
+                msg += f"\n#{symbol} #{exchange} #SuddenDrop"
+                
+                print(f"[Holdings Crash] {symbol} dropped {abs(pct_change):.2f}% from {max_prev_close}. Sending alert.")
+                if send_telegram_message(msg):
+                    crash_state[ticker] = today_str
+                    save_holdings_crash_state(crash_state)
+                else:
+                    print(f"[Holdings Crash] Failed to send alert for {symbol}. Will retry.")
+                    
+        except Exception as e:
+            print(f"[Holdings Crash] Error checking {symbol}: {e}")
 
 REMINDERS_FILE = os.path.join(BASE_DIR, "signal_reminders.json")
 
@@ -1469,7 +1545,6 @@ def analyze_stocks():
         
     print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Running TradingView market analysis...")
     state = load_state()
-    consolidated_crash_alerts = []
     
     for ticker, config in STOCKS.items():
         try:
@@ -1510,65 +1585,6 @@ def analyze_stocks():
                     highest_price = current_high
                     trade['highest_price'] = highest_price
                     save_state(state) 
-                
-                # --- Stock Crash Alert Logic (Rolling Return 1-5 days) ---
-                trigger_window = None
-                trigger_return = 0.0
-                
-                # Check 1 to 5 days ago. df.iloc[-1] is today.
-                for n_days in range(1, 6):
-                    idx = -(n_days + 1)
-                    if abs(idx) <= len(df):
-                        past_close = df['close'].iloc[idx]
-                        rolling_return = (current_close - past_close) / past_close
-                        if rolling_return <= -0.15:
-                            trigger_window = n_days
-                            trigger_return = rolling_return
-                            break # Found the shortest window that triggered
-                            
-                crash_active = trade.get("crash_alert_active", False)
-                trigger_price = trade.get("crash_alert_trigger_price", 0.0)
-                
-                # Reset if price recovered above the trigger level
-                if crash_active and current_close > trigger_price:
-                    crash_active = False
-                    trade["crash_alert_active"] = False
-                    save_state(state)
-                    
-                if trigger_window is not None and not crash_active:
-                    unrealized_pl = ((current_close - entry_price) / entry_price) * 100
-                    
-                    activation_price = entry_price * (1 + config['trail_act'])
-                    if highest_price >= activation_price:
-                        stop_price = entry_price * (1 + config['trail_buf'])
-                    else:
-                        stop_price = entry_price * (1 - config['sl'])
-                        
-                    dist_to_stop = ((current_close - stop_price) / stop_price) * 100
-                    
-                    payload = (
-                        f"📉 <b>{ticker} ({config['name']})</b>\n"
-                        f"⚠️ Down <b>{abs(trigger_return)*100:.2f}%</b> over {trigger_window} day(s)\n"
-                        f"🚪 Entry: ₹{entry_price:,.2f} | 💵 Current: ₹{current_close:,.2f} ({unrealized_pl:+.2f}%)\n"
-                        f"🛑 Distance to Stop: {dist_to_stop:.2f}% above stop"
-                    )
-                    consolidated_crash_alerts.append(payload)
-                    
-                    # Log to CSV
-                    log_file = os.path.join(BASE_DIR, "wfo", "results", "crash_alerts_log.csv")
-                    try:
-                        log_exists = os.path.exists(log_file)
-                        with open(log_file, "a") as f:
-                            if not log_exists:
-                                f.write("Date,Ticker,Window,Return,CurrentPrice\n")
-                            f.write(f"{date_str},{ticker},{trigger_window},{trigger_return:.4f},{current_close:.2f}\n")
-                    except Exception as e:
-                        print(f"Error writing to crash log: {e}")
-                        
-                    trade["crash_alert_active"] = True
-                    trade["crash_alert_trigger_price"] = current_close
-                    save_state(state)
-                # --------------------------------------------------------
                 
                 # Exit levels
                 target_price = entry_price * (1 + config['tp'])
@@ -1667,12 +1683,6 @@ def analyze_stocks():
                     
         except Exception as e:
             print(f"Error processing {ticker}: {e}")
-            
-    if consolidated_crash_alerts:
-        msg = "━━━━━━━━━━━━━━━━━━━━━━\n🚨 <b>CONSOLIDATED CRASH ALERTS</b> 🚨\n━━━━━━━━━━━━━━━━━━━━━━\n\n"
-        msg += "\n\n".join(consolidated_crash_alerts)
-        msg += "\n\n⚠️ Please review these positions immediately."
-        send_telegram_message(msg)
 
 def run_threaded(job_func):
     job_thread = threading.Thread(target=job_func)
@@ -1687,6 +1697,7 @@ def run_scheduler():
     run_threaded(check_news_stream)
     run_threaded(check_earnings_surprises)
     run_threaded(check_market_crash)
+    run_threaded(check_holdings_crash)
     if datetime.now(IST).weekday() == 5: # 5 = Saturday
         run_threaded(send_holdings_report)
 
@@ -1698,6 +1709,9 @@ def run_scheduler():
 
     # Schedule market-crash check every 5 minutes (needs to catch sudden drops fast)
     schedule.every(5).minutes.do(run_threaded, check_market_crash)
+
+    # Schedule holdings drop check every 15 minutes
+    schedule.every(15).minutes.do(run_threaded, check_holdings_crash)
 
     # Schedule earnings-surprise filing check every 15 minutes (to catch
     # results filings quickly during market hours)
