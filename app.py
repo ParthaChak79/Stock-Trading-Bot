@@ -1510,6 +1510,29 @@ def analyze_stocks():
                     trade['highest_price'] = highest_price
                     save_state(state) 
                 
+                # --- Stock Crash Alert Logic (10% drop in 1-5 days) ---
+                last_5_days = df.tail(5)
+                recent_high = last_5_days['high'].max()
+                
+                if current_close <= recent_high * 0.90:
+                    today_str = today.strftime("%Y-%m-%d")
+                    last_alert = trade.get("last_crash_alert_date", "")
+                    
+                    if last_alert != today_str:
+                        pct_drop = ((recent_high - current_close) / recent_high) * 100
+                        msg = f"━━━━━━━━━━━━━━━━━━━━━━\n🚨 <b>STOCK CRASH ALERT: {config['name']}</b> 🚨\n━━━━━━━━━━━━━━━━━━━━━━\n"
+                        msg += f"📉 <b>{ticker}</b> has fallen by <b>{pct_drop:.2f}%</b> from its 5-day high!\n\n"
+                        msg += f"🔹 5-Day High: ₹{recent_high:,.2f}\n"
+                        msg += f"🔹 Current Price: ₹{current_close:,.2f}\n"
+                        msg += f"🔹 Entry Price: ₹{entry_price:,.2f}\n\n"
+                        msg += f"⚠️ Please review this position immediately.\n"
+                        msg += f"\n#{ticker} #NSE #StockCrash"
+                        
+                        if send_telegram_message(msg):
+                            trade['last_crash_alert_date'] = today_str
+                            save_state(state)
+                # --------------------------------------------------------
+                
                 # Exit levels
                 target_price = entry_price * (1 + config['tp'])
                 activation_price = entry_price * (1 + config['trail_act'])
