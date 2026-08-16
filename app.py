@@ -1469,6 +1469,7 @@ def analyze_stocks():
         
     print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Running TradingView market analysis...")
     state = load_state()
+    consolidated_crash_alerts = []
     
     for ticker, config in STOCKS.items():
         try:
@@ -1510,27 +1511,63 @@ def analyze_stocks():
                     trade['highest_price'] = highest_price
                     save_state(state) 
                 
-                # --- Stock Crash Alert Logic (15% drop in 1-5 days) ---
-                last_5_days = df.tail(5)
-                recent_high = last_5_days['high'].max()
+                # --- Stock Crash Alert Logic (Rolling Return 1-5 days) ---
+                trigger_window = None
+                trigger_return = 0.0
                 
-                if current_close <= recent_high * 0.85:
-                    today_str = today.strftime("%Y-%m-%d")
-                    last_alert = trade.get("last_crash_alert_date", "")
+                # Check 1 to 5 days ago. df.iloc[-1] is today.
+                for n_days in range(1, 6):
+                    idx = -(n_days + 1)
+                    if abs(idx) <= len(df):
+                        past_close = df['close'].iloc[idx]
+                        rolling_return = (current_close - past_close) / past_close
+                        if rolling_return <= -0.15:
+                            trigger_window = n_days
+                            trigger_return = rolling_return
+                            break # Found the shortest window that triggered
+                            
+                crash_active = trade.get("crash_alert_active", False)
+                trigger_price = trade.get("crash_alert_trigger_price", 0.0)
+                
+                # Reset if price recovered above the trigger level
+                if crash_active and current_close > trigger_price:
+                    crash_active = False
+                    trade["crash_alert_active"] = False
+                    save_state(state)
                     
-                    if last_alert != today_str:
-                        pct_drop = ((recent_high - current_close) / recent_high) * 100
-                        msg = f"━━━━━━━━━━━━━━━━━━━━━━\n🚨 <b>STOCK CRASH ALERT: {config['name']}</b> 🚨\n━━━━━━━━━━━━━━━━━━━━━━\n"
-                        msg += f"📉 <b>{ticker}</b> has fallen by <b>{pct_drop:.2f}%</b> from its 5-day high!\n\n"
-                        msg += f"🔹 5-Day High: ₹{recent_high:,.2f}\n"
-                        msg += f"🔹 Current Price: ₹{current_close:,.2f}\n"
-                        msg += f"🔹 Entry Price: ₹{entry_price:,.2f}\n\n"
-                        msg += f"⚠️ Please review this position immediately.\n"
-                        msg += f"\n#{ticker} #NSE #StockCrash"
+                if trigger_window is not None and not crash_active:
+                    unrealized_pl = ((current_close - entry_price) / entry_price) * 100
+                    
+                    activation_price = entry_price * (1 + config['trail_act'])
+                    if highest_price >= activation_price:
+                        stop_price = entry_price * (1 + config['trail_buf'])
+                    else:
+                        stop_price = entry_price * (1 - config['sl'])
                         
-                        if send_telegram_message(msg):
-                            trade['last_crash_alert_date'] = today_str
-                            save_state(state)
+                    dist_to_stop = ((current_close - stop_price) / stop_price) * 100
+                    
+                    payload = (
+                        f"📉 <b>{ticker} ({config['name']})</b>\n"
+                        f"⚠️ Down <b>{abs(trigger_return)*100:.2f}%</b> over {trigger_window} day(s)\n"
+                        f"🚪 Entry: ₹{entry_price:,.2f} | 💵 Current: ₹{current_close:,.2f} ({unrealized_pl:+.2f}%)\n"
+                        f"🛑 Distance to Stop: {dist_to_stop:.2f}% above stop"
+                    )
+                    consolidated_crash_alerts.append(payload)
+                    
+                    # Log to CSV
+                    log_file = os.path.join(BASE_DIR, "wfo", "results", "crash_alerts_log.csv")
+                    try:
+                        log_exists = os.path.exists(log_file)
+                        with open(log_file, "a") as f:
+                            if not log_exists:
+                                f.write("Date,Ticker,Window,Return,CurrentPrice\n")
+                            f.write(f"{date_str},{ticker},{trigger_window},{trigger_return:.4f},{current_close:.2f}\n")
+                    except Exception as e:
+                        print(f"Error writing to crash log: {e}")
+                        
+                    trade["crash_alert_active"] = True
+                    trade["crash_alert_trigger_price"] = current_close
+                    save_state(state)
                 # --------------------------------------------------------
                 
                 # Exit levels
@@ -1630,6 +1667,12 @@ def analyze_stocks():
                     
         except Exception as e:
             print(f"Error processing {ticker}: {e}")
+            
+    if consolidated_crash_alerts:
+        msg = "━━━━━━━━━━━━━━━━━━━━━━\n🚨 <b>CONSOLIDATED CRASH ALERTS</b> 🚨\n━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        msg += "\n\n".join(consolidated_crash_alerts)
+        msg += "\n\n⚠️ Please review these positions immediately."
+        send_telegram_message(msg)
 
 def run_threaded(job_func):
     job_thread = threading.Thread(target=job_func)
