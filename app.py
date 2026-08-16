@@ -1510,11 +1510,11 @@ def analyze_stocks():
                     trade['highest_price'] = highest_price
                     save_state(state) 
                 
-                # --- Stock Crash Alert Logic (10% drop in 1-5 days) ---
+                # --- Stock Crash Alert Logic (15% drop in 1-5 days) ---
                 last_5_days = df.tail(5)
                 recent_high = last_5_days['high'].max()
                 
-                if current_close <= recent_high * 0.90:
+                if current_close <= recent_high * 0.85:
                     today_str = today.strftime("%Y-%m-%d")
                     last_alert = trade.get("last_crash_alert_date", "")
                     
