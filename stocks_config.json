@@ -659,5 +659,15 @@
         "trail_buf": 0.11,
         "probability": 0.95,
         "yf_ticker": "NESTLEIND.NS"
+    },
+    "INDRAMEDCO": {
+        "exchange": "NSE",
+        "name": "Indraprastha Medical Corporation Limited",
+        "tp": 0.27,
+        "sl": 0.23,
+        "trail_act": 0.19,
+        "trail_buf": 0.06,
+        "probability": 0.62,
+        "yf_ticker": "INDRAMEDCO.NS"
     }
 }

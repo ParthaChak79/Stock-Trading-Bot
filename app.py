@@ -368,7 +368,8 @@ def load_stocks_config():
         "STAR": {"exchange": "NSE", "name": "Strides Pharma Science Ltd", "tp": 0.22, "sl": 0.23, "trail_act": 0.16, "trail_buf": 0.09, "probability": 0.70, "yf_ticker": "STAR.NS"},
         "ALKEM": {"exchange": "NSE", "name": "Alkem Laboratories Ltd", "tp": 0.23, "sl": 0.25, "trail_act": 0.17, "trail_buf": 0.10, "probability": 0.86, "yf_ticker": "ALKEM.NS"},
         "FINEORG": {"exchange": "NSE", "name": "Fine Organic Industries Ltd", "tp": 0.21, "sl": 0.24, "trail_act": 0.14, "trail_buf": 0.06, "probability": 0.91, "yf_ticker": "FINEORG.NS"},
-        "NESTLEIND": {"exchange": "NSE", "name": "Nestle India Ltd", "tp": 0.23, "sl": 0.22, "trail_act": 0.15, "trail_buf": 0.11, "probability": 0.95, "yf_ticker": "NESTLEIND.NS"}
+        "NESTLEIND": {"exchange": "NSE", "name": "Nestle India Ltd", "tp": 0.23, "sl": 0.22, "trail_act": 0.15, "trail_buf": 0.11, "probability": 0.95, "yf_ticker": "NESTLEIND.NS"},
+        "INDRAMEDCO": {"exchange": "NSE", "name": "Indraprastha Medical Corporation Limited", "tp": 0.27, "sl": 0.23, "trail_act": 0.19, "trail_buf": 0.06, "probability": 0.62, "yf_ticker": "INDRAMEDCO.NS"}
     }
 
 STOCKS = load_stocks_config()
