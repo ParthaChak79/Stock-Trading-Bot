@@ -796,10 +796,11 @@ def _send_holdings_report_internal():
     msg_lines = ["━━━━━━━━━━━━━━━━━━━━━━\n📊 <b>Weekly Portfolio Report (Buy Signals - The Last 3 Months)</b>\n━━━━━━━━━━━━━━━━━━━━━━\n"]
     
     # 1. Active Holdings
-    msg_lines.append("🟩 <b>Active Holdings</b>")
     if not state:
+        msg_lines.append("🟩 <b>Active Holdings</b>")
         msg_lines.append("<i>No active holdings at the moment.</i>\n")
     else:
+        holdings_data = []
         for ticker, data in state.items():
             config = STOCKS.get(ticker)
             if not config:
@@ -819,16 +820,41 @@ def _send_holdings_report_internal():
             entry_price = data['entry_price']
             pnl_pct = ((current_price - entry_price) / entry_price) * 100
             
-            pnl_emoji = "🟢" if pnl_pct >= 0 else "🔴"
-            pnl_sign = "+" if pnl_pct >= 0 else ""
+            holdings_data.append({
+                'ticker': ticker,
+                'name': config.get('name', ticker),
+                'date': data['date'],
+                'entry_price': entry_price,
+                'current_price': current_price,
+                'pnl_pct': pnl_pct
+            })
             
-            msg_lines.append(
-                f"• <b>{config.get('name', ticker)} ({ticker})</b>\n"
-                f"  📅 Entry Date: {data['date']}\n"
-                f"  🚪 Entry Price: ₹{entry_price:.2f}\n"
-                f"  💵 Current Price: ₹{current_price:.2f}\n"
-                f"  📊 P&L: {pnl_emoji} <b>{pnl_sign}{pnl_pct:.2f}%</b>\n"
+        # Sort by PnL% descending
+        holdings_data.sort(key=lambda x: x['pnl_pct'], reverse=True)
+        
+        def format_holding(h):
+            pnl_emoji = "🟢" if h['pnl_pct'] >= 0 else "🔴"
+            pnl_sign = "+" if h['pnl_pct'] >= 0 else ""
+            return (
+                f"• <b>{h['name']} ({h['ticker']})</b>\n"
+                f"  📅 Entry Date: {h['date']}\n"
+                f"  🚪 Entry Price: ₹{h['entry_price']:.2f}\n"
+                f"  💵 Current Price: ₹{h['current_price']:.2f}\n"
+                f"  📊 P&L: {pnl_emoji} <b>{pnl_sign}{h['pnl_pct']:.2f}%</b>\n"
             )
+            
+        if len(holdings_data) <= 10:
+            msg_lines.append("🟩 <b>Active Holdings</b>")
+            for h in holdings_data:
+                msg_lines.append(format_holding(h))
+        else:
+            msg_lines.append("🏆 <b>Top 5 Performers</b>")
+            for h in holdings_data[:5]:
+                msg_lines.append(format_holding(h))
+                
+            msg_lines.append("📉 <b>Bottom 5 Performers</b>")
+            for h in holdings_data[-5:]:
+                msg_lines.append(format_holding(h))
             
     # 2. Exited Holdings
     msg_lines.append("━━━━━━━━━━━━━━━━━━━━━━\n🟥 <b>Recent Exits (Last 3 Months)</b>\n━━━━━━━━━━━━━━━━━━━━━━")
