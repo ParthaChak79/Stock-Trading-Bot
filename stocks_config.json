@@ -333,11 +333,11 @@
     "RRKABEL": {
         "exchange": "NSE",
         "name": "RR Kabel Ltd",
-        "tp": 0.10,
-        "sl": 0.08,
+        "tp": 0.13,
+        "sl": 0.16,
         "trail_act": 0.08,
-        "trail_buf": 0.06,
-        "probability": 0.80,
+        "trail_buf": 0.07,
+        "probability": 0.75,
         "yf_ticker": "RRKABEL.NS"
     },
     "PRICOLLTD": {
