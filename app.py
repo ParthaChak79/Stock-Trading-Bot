@@ -1726,7 +1726,7 @@ def run_scheduler():
     run_threaded(check_earnings_surprises)
     run_threaded(check_market_crash)
     run_threaded(check_holdings_crash)
-    if datetime.now(IST).weekday() == 5: # 5 = Saturday
+    if datetime.now(IST).weekday() == 4: # 4 = Friday
         run_threaded(send_holdings_report)
 
     # Schedule trading check every hour
@@ -1748,8 +1748,8 @@ def run_scheduler():
     # Schedule pre-market report daily at 9:08 AM IST (Asia/Kolkata)
     schedule.every().day.at("09:08", "Asia/Kolkata").do(run_threaded, send_pre_market_report)
     
-    # Schedule weekly holdings report every Saturday at 12:00 PM IST (Asia/Kolkata)
-    schedule.every().saturday.at("12:00", "Asia/Kolkata").do(run_threaded, send_holdings_report)
+    # Schedule weekly holdings report every Friday at 4:00 PM IST (Asia/Kolkata)
+    schedule.every().friday.at("16:00", "Asia/Kolkata").do(run_threaded, send_holdings_report)
     
     print("\nScheduler running. Press Ctrl+C to exit.\n")
     healthcheck_url = os.getenv("HEALTHCHECK_URL")
