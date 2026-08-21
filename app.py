@@ -220,6 +220,11 @@ SMA_PCT = 0.02 # Minimum 2% above 50 SMA
 NIFTY_INDEX_TICKER = "^NSEI"
 MARKET_CRASH_PCT = -2.0
 
+NIFTY_SMA_LEN = 200
+REGIME_TREND_THRESHOLD = 0.03
+VIX_LOW_THRESHOLD = 13
+VIX_HIGH_THRESHOLD = 20
+
 # NSE Market Holidays Configuration for 2026
 NSE_HOLIDAYS = {
     2026: {
@@ -481,7 +486,8 @@ def load_closed_trades():
 
 def log_closed_trade(ticker, name, entry_price, exit_price, entry_date, exit_date, pnl_pct, reason,
                       macd_hist_at_entry=None, sma_pct_at_entry=None, probability_at_entry=None,
-                      exit_reason_category=None, days_held=None):
+                      exit_reason_category=None, days_held=None,
+                      regime_at_entry=None, regime_at_exit=None):
     trades = load_closed_trades()
     # Check duplicate
     for t in trades:
@@ -497,7 +503,9 @@ def log_closed_trade(ticker, name, entry_price, exit_price, entry_date, exit_dat
         "sma_pct_at_entry": sma_pct_at_entry,
         "probability_at_entry": probability_at_entry,
         "exit_reason_category": exit_reason_category,
-        "days_held": days_held
+        "days_held": days_held,
+        "regime_at_entry": regime_at_entry,
+        "regime_at_exit": regime_at_exit
     })
     atomic_save_json(trades, CLOSED_TRADES_FILE)
     backup_state_files()
@@ -1552,6 +1560,41 @@ def send_pre_market_report():
     else:
         print("Failed to send pre-market report.")
 
+def get_market_regime():
+    """Classify the current market condition: trend (up/down/sideways) + 
+    volatility (low/normal/high), based on NIFTY vs its 200-SMA and India VIX."""
+    try:
+        nifty = yf.Ticker(NIFTY_INDEX_TICKER)
+        hist = nifty.history(period="300d")
+        if hist.empty or len(hist) < NIFTY_SMA_LEN:
+            return {"trend": "UNKNOWN", "volatility": "UNKNOWN", "label": "UNKNOWN"}
+
+        current_price = hist['Close'].iloc[-1]
+        sma200 = hist['Close'].rolling(window=NIFTY_SMA_LEN).mean().iloc[-1]
+        pct_from_sma = (current_price - sma200) / sma200
+
+        if pct_from_sma > REGIME_TREND_THRESHOLD:
+            trend = "TRENDING_UP"
+        elif pct_from_sma < -REGIME_TREND_THRESHOLD:
+            trend = "TRENDING_DOWN"
+        else:
+            trend = "SIDEWAYS"
+
+        vix_level, _ = _yf_change(INDIA_VIX_TICKER)
+        if vix_level is None:
+            volatility = "UNKNOWN"
+        elif vix_level < VIX_LOW_THRESHOLD:
+            volatility = "LOW_VOL"
+        elif vix_level > VIX_HIGH_THRESHOLD:
+            volatility = "HIGH_VOL"
+        else:
+            volatility = "NORMAL_VOL"
+
+        return {"trend": trend, "volatility": volatility, "label": f"{trend}_{volatility}"}
+    except Exception as e:
+        print(f"[Regime] Error computing market regime: {e}")
+        return {"trend": "UNKNOWN", "volatility": "UNKNOWN", "label": "UNKNOWN"}
+
 def calculate_indicators(df):
     """Calculate MACD and SMA 50"""
     if len(df) < SMA_LEN:
@@ -1576,6 +1619,7 @@ def analyze_stocks():
         
     print(f"\n[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Running TradingView market analysis...")
     state = load_state()
+    market_regime = get_market_regime()
     
     for ticker, config in STOCKS.items():
         try:
@@ -1680,7 +1724,9 @@ def analyze_stocks():
                             sma_pct_at_entry=trade.get('sma_pct_at_entry'),
                             probability_at_entry=trade.get('probability_at_entry'),
                             exit_reason_category=exit_reason_category,
-                            days_held=days_held
+                            days_held=days_held,
+                            regime_at_entry=trade.get('regime_at_entry'),
+                            regime_at_exit=market_regime['label']
                         )
                         
                         # Remove from active trades
@@ -1723,7 +1769,8 @@ def analyze_stocks():
                             "date": date_str,
                             "macd_hist_at_entry": float(hist_line),
                             "sma_pct_at_entry": float((current_close - sma_50) / sma_50 * 100),
-                            "probability_at_entry": config.get('probability')
+                            "probability_at_entry": config.get('probability'),
+                            "regime_at_entry": market_regime['label']
                         }
                         save_state(state)
                     else:
