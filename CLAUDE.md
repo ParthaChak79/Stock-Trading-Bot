@@ -16,8 +16,9 @@ Key features:
 - Breaking news alerts, independent of the trading signals (`check_news_stream`)
 - Earnings-surprise alerts: queries TradingView's scanner for each stock's latest reported quarter (actual/estimate/surprise% for EPS and Revenue) — replaced an earlier NSE-PDF-parsing approach that was unreliable across varying filing layouts (`check_earnings_surprises`)
 - Market-crash alert: fires once per day if NIFTY 50 falls ≥2% intraday (`check_market_crash`)
+- Holdings-crash alert: fires if an active holding drops 10% or more from its peak close in the last 5 days (`check_holdings_crash`)
 - Daily structured pre-market brief: GIFT Nifty setup (text-mined from news, no free API exists for it), global cues, commodities, FII/DII flows with a computed buy/sell streak, India VIX, prior close + Nifty-50 breadth, overall sentiment (`send_pre_market_report`)
-- Weekly portfolio/closed-trades report every Friday (`send_holdings_report`)
+- Weekly portfolio/closed-trades report every Friday at 4 PM IST, filtered to Top 5 and Bottom 5 active holdings to avoid Telegram length limits (`send_holdings_report`)
 - Portfolio state persistence across restarts (saved in `portfolio_state.json`)
 - Closed trade history tracking (saved in `closed_trades.json`)
 
@@ -54,6 +55,7 @@ Key features:
 | `seen_news.json` / `seen_earnings.json` | Dedup caches preventing repeat news/earnings alerts — gitignored, runtime-generated |
 | `signal_reminders.json` | Next-day reminders of yesterday's BUY/SELL signals — gitignored, runtime-generated |
 | `market_crash_state.json` | Last date a market-crash alert fired, so it only fires once per day — gitignored, runtime-generated |
+| `holdings_crash_state.json` | Tracks which tickers have already triggered a sudden-drop alert today to prevent spam — gitignored, runtime-generated |
 | `fii_dii_history.json` | Daily FII net-flow history, used to compute the buy/sell streak shown in the pre-market brief — gitignored, runtime-generated |
 | `.env` | Secrets: Telegram bot token, chat ID, optional Twilio credentials, optional HuggingFace token |
 | `wfo/` | Separate, gitignored walk-forward-optimization research toolkit (not part of the deployed bot; has its own `.venv`) |
@@ -99,7 +101,7 @@ Key features:
 python app.py
 ```
 - Performs immediate analysis of all configured stocks plus one run of every other scheduled check
-- Then blocks in the scheduler loop (hourly trading checks, 30-min news, 15-min earnings, 5-min crash checks, daily 9:08 AM pre-market brief, Friday 4 PM weekly report — see `run_scheduler()`)
+- Then blocks in the scheduler loop (hourly trading checks, 30-min news, 15-min earnings and holdings-crash checks, 5-min market crash checks, daily 9:08 AM pre-market brief, Friday 4 PM weekly report — see `run_scheduler()`)
 - Sends Telegram (and, if configured, WhatsApp) alerts
 - Logs to `bot.log`
 
