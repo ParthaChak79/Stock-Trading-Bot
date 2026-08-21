@@ -479,7 +479,9 @@ def load_closed_trades():
         print(f"Error loading closed_trades.json: {e}")
     return []
 
-def log_closed_trade(ticker, name, entry_price, exit_price, entry_date, exit_date, pnl_pct, reason):
+def log_closed_trade(ticker, name, entry_price, exit_price, entry_date, exit_date, pnl_pct, reason,
+                      macd_hist_at_entry=None, sma_pct_at_entry=None, probability_at_entry=None,
+                      exit_reason_category=None, days_held=None):
     trades = load_closed_trades()
     # Check duplicate
     for t in trades:
@@ -487,14 +489,15 @@ def log_closed_trade(ticker, name, entry_price, exit_price, entry_date, exit_dat
             return
             
     trades.append({
-        "ticker": ticker,
-        "name": name,
-        "entry_price": float(entry_price),
-        "exit_price": float(exit_price),
-        "entry_date": entry_date,
-        "exit_date": exit_date,
-        "pnl_pct": float(pnl_pct),
-        "reason": str(reason)
+        "ticker": ticker, "name": name,
+        "entry_price": float(entry_price), "exit_price": float(exit_price),
+        "entry_date": entry_date, "exit_date": exit_date,
+        "pnl_pct": float(pnl_pct), "reason": str(reason),
+        "macd_hist_at_entry": macd_hist_at_entry,
+        "sma_pct_at_entry": sma_pct_at_entry,
+        "probability_at_entry": probability_at_entry,
+        "exit_reason_category": exit_reason_category,
+        "days_held": days_held
     })
     atomic_save_json(trades, CLOSED_TRADES_FILE)
     backup_state_files()
@@ -1637,6 +1640,21 @@ def analyze_stocks():
                 if sell_reason:
                     profit_pct = ((current_close - entry_price) / entry_price) * 100
                     
+                    if current_close >= target_price:
+                        exit_reason_category = "TAKE_PROFIT"
+                    elif highest_price >= activation_price:
+                        exit_reason_category = "TRAILING_STOP"
+                    else:
+                        exit_reason_category = "STOP_LOSS"
+                        
+                    days_held = None
+                    try:
+                        entry_dt = datetime.strptime(trade.get('date', ''), "%d %b %Y")
+                        exit_dt = datetime.strptime(date_str, "%d %b %Y")
+                        days_held = (exit_dt - entry_dt).days
+                    except Exception:
+                        pass
+                    
                     msg = f"━━━━━━━━━━━━━━━━━━━━━━\n📉 <b>SELL ALERT: {config['name']}</b>\n━━━━━━━━━━━━━━━━━━━━━━\n"
                     msg += f"🗓️ Date: {date_str}\n"
                     msg += f"💡 Reason: {sell_reason}\n\n"
@@ -1654,14 +1672,15 @@ def analyze_stocks():
                         
                         # Log to closed trades
                         log_closed_trade(
-                            ticker=ticker,
-                            name=config['name'],
-                            entry_price=entry_price,
-                            exit_price=current_close,
-                            entry_date=trade.get('date', 'Unknown'),
-                            exit_date=date_str,
-                            pnl_pct=profit_pct,
-                            reason=sell_reason
+                            ticker=ticker, name=config['name'],
+                            entry_price=entry_price, exit_price=current_close,
+                            entry_date=trade.get('date', 'Unknown'), exit_date=date_str,
+                            pnl_pct=profit_pct, reason=sell_reason,
+                            macd_hist_at_entry=trade.get('macd_hist_at_entry'),
+                            sma_pct_at_entry=trade.get('sma_pct_at_entry'),
+                            probability_at_entry=trade.get('probability_at_entry'),
+                            exit_reason_category=exit_reason_category,
+                            days_held=days_held
                         )
                         
                         # Remove from active trades
@@ -1701,7 +1720,10 @@ def analyze_stocks():
                         state[ticker] = {
                             "entry_price": current_close,
                             "highest_price": current_high,
-                            "date": date_str
+                            "date": date_str,
+                            "macd_hist_at_entry": float(hist_line),
+                            "sma_pct_at_entry": float((current_close - sma_50) / sma_50 * 100),
+                            "probability_at_entry": config.get('probability')
                         }
                         save_state(state)
                     else:
