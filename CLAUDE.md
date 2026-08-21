@@ -96,9 +96,13 @@ Key features:
 
 ## Development Commands
 
-### Run the Bot
+### Run the Bot (Production)
 ```bash
-python app.py
+cd Stock-Trading-Bot
+pkill -f app.py
+git pull origin main
+source venv/bin/activate
+nohup python3 -u app.py > bot.log 2>&1 &
 ```
 - Performs immediate analysis of all configured stocks plus one run of every other scheduled check
 - Then blocks in the scheduler loop (hourly trading checks, 30-min news, 15-min earnings and holdings-crash checks, 5-min market crash checks, daily 9:08 AM pre-market brief, Friday 4 PM weekly report — see `run_scheduler()`)
