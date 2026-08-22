@@ -50,8 +50,8 @@ Key features:
 | `top50_stocks_v36.json` | The ranked master list — every stock scoring ≥60, re-ranked each rebuild. Committed (curated data); `stock_screener.py` backs up the prior version to `top50_stocks_v36.json.bak` (gitignored) before each rewrite |
 | `qualitative_scores.json` | Per-ticker Claude qualitative-score cache with reasoning + `asof` date — gitignored, runtime-generated |
 | `earnings_estimates.json` | Unused — was consensus-estimate input for the old PDF-parsing earnings pipeline; `check_earnings_surprises` now gets estimates directly from TradingView |
-| `portfolio_state.json` | Active trades: entry price, entry time, highest price (for trailing stop trigger) — gitignored, runtime-generated |
-| `closed_trades.json` | Completed trades: entry/exit prices, PnL, exit reason — gitignored, runtime-generated |
+| `portfolio_state.json` | Active trades: entry price, entry time, highest price (for trailing stop trigger), plus entry context (MACD hist, SMA %, win probability, market regime) — gitignored, runtime-generated |
+| `closed_trades.json` | Completed trades: entry/exit prices, PnL, exit reason category (TAKE_PROFIT, STOP_LOSS, etc.), days held, and market regime at entry/exit — gitignored, runtime-generated |
 | `seen_news.json` / `seen_earnings.json` | Dedup caches preventing repeat news/earnings alerts — gitignored, runtime-generated |
 | `signal_reminders.json` | Next-day reminders of yesterday's BUY/SELL signals — gitignored, runtime-generated |
 | `market_crash_state.json` | Last date a market-crash alert fired, so it only fires once per day — gitignored, runtime-generated |
