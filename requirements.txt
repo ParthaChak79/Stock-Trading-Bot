@@ -6,3 +6,4 @@ schedule==1.2.1
 tvdatafeed @ git+https://github.com/rongardF/tvdatafeed.git
 yfinance
 anthropic
+Flask==3.0.0

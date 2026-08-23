@@ -10,6 +10,7 @@ import traceback
 
 import shutil
 import socket
+from flask import Flask, request, jsonify
 
 # Globally prevent ANY network request from hanging the bot forever
 socket.setdefaulttimeout(15)
@@ -1845,5 +1846,47 @@ def run_scheduler():
             print(f"Fatal error in scheduler loop: {e}")
             time.sleep(60) # Prevent rapid-fire spam if loop constantly crashes
 
+# Flask Webhook Server
+app_web = Flask(__name__)
+WEBHOOK_SECRET = os.getenv("WEBHOOK_SECRET", "default_secret_please_change")
+
+@app_web.route('/webhook/tv_pattern', methods=['POST'])
+def tv_pattern_webhook():
+    token = request.args.get("token")
+    if token != WEBHOOK_SECRET:
+        return jsonify({"error": "Unauthorized"}), 401
+        
+    data = request.json
+    if not data:
+        return jsonify({"error": "Invalid JSON payload"}), 400
+        
+    ticker = data.get("ticker", "UNKNOWN")
+    pattern = data.get("pattern", "Unknown Pattern")
+    price = data.get("price", "N/A")
+    message = data.get("message", "")
+    
+    msg = f"📊 <b>CHART PATTERN ALERT: {ticker}</b>\n"
+    msg += f"📐 Pattern: {pattern}\n"
+    msg += f"💵 Price: ₹{price}\n"
+    if message:
+        msg += f"📝 Note: {message}\n"
+    
+    print(f"Received pattern webhook for {ticker}: {pattern}")
+    send_telegram_message(msg)
+    
+    return jsonify({"status": "alert sent"}), 200
+
+def start_flask():
+    print("Starting Flask webhook server on port 5001...")
+    # use_reloader=False prevents Flask from spinning up a second process
+    app_web.run(host='0.0.0.0', port=5001, use_reloader=False)
+
 if __name__ == "__main__":
+    if "TWILIO_ACCOUNT_SID" not in os.environ or not os.getenv("TWILIO_ACCOUNT_SID"):
+        print("Running in TELEGRAM ONLY mode (no Twilio configured).")
+        
+    flask_thread = threading.Thread(target=start_flask)
+    flask_thread.daemon = True
+    flask_thread.start()
+    
     run_scheduler()

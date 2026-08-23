@@ -32,7 +32,7 @@ Key features:
 5. **State Persistence** → JSON files track open/closed trades, dedup caches, and alert history across restarts
 
 ### Everything is one process, gated by a single `schedule` loop
-`app.py` has no web server, queue, or database — `run_scheduler()` at the bottom of the file registers every recurring job against the `schedule` library and then blocks in a `while True: schedule.run_pending()` loop, polling every 60s. All the features above (trading signals, news, earnings, crash alerts, pre-market brief, weekly report) are independent jobs on this one loop, each wrapped in its own try/except so one feature failing (e.g. NSE blocking a request) never takes down the others. When adding a new recurring feature, follow this pattern: write a standalone `check_*`/`send_*` function that swallows its own exceptions, then register it with `schedule.every(...).do(...)` in `run_scheduler()`.
+`app.py` has no web server (except a background thread for TradingView Webhooks), queue, or database — `run_scheduler()` at the bottom of the file registers every recurring job against the `schedule` library and then blocks in a `while True: schedule.run_pending()` loop, polling every 60s. The Flask web server runs in a daemon thread so it does not block the scheduler. All the features above (trading signals, news, earnings, crash alerts, pre-market brief, weekly report) are independent jobs on this one loop, each wrapped in its own try/except so one feature failing (e.g. NSE blocking a request) never takes down the others. When adding a new recurring feature, follow this pattern: write a standalone `check_*`/`send_*` function that swallows its own exceptions, then register it with `schedule.every(...).do(...)` in `run_scheduler()`.
 
 ### Core Files
 
@@ -143,6 +143,7 @@ python test_tv.py
 ```
 TELEGRAM_BOT_TOKEN=<your-bot-token>
 TELEGRAM_CHAT_ID=<your-chat-id>
+WEBHOOK_SECRET=<your-secret-token>
 TWILIO_ACCOUNT_SID=<optional>
 TWILIO_AUTH_TOKEN=<optional>
 TWILIO_API_KEY=<optional>
@@ -170,6 +171,22 @@ Each stock entry requires:
 1. Backtest it first: edit `TICKER`/`START_DATE` in `strategy_optimizer.py` and run it
 2. Add entry to `stocks_config.json` with optimized parameters
 3. Restart the bot
+
+### TradingView Webhooks (Chart Pattern Recognition)
+The bot runs a lightweight Flask web server in the background on port `5001` to receive custom webhooks from TradingView alerts (e.g., for Head & Shoulders or Cup & Handle patterns).
+1. **Google Cloud Firewall:** You MUST open port `5001` for incoming TCP traffic in your GCP console.
+2. **Alert Setup in TradingView:**
+   - Webhook URL: `http://<YOUR_SERVER_IP>:5001/webhook/tv_pattern?token=<YOUR_WEBHOOK_SECRET>`
+   - Message Payload (JSON):
+     ```json
+     {
+       "ticker": "SBI",
+       "pattern": "Head and Shoulders",
+       "price": "{{close}}",
+       "message": "Daily chart pattern formed."
+     }
+     ```
+   The bot will parse this JSON and forward a formatted alert to your Telegram.
 
 ## Important Notes
 
