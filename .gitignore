@@ -1,6 +1,8 @@
 .env
 portfolio_state.json
 seen_news.json
+seen_earnings.json
+portfolio_ledger.json
 *.log
 __pycache__/
 *.pyc

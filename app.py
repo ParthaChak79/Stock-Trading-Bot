@@ -64,6 +64,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATE_FILE = os.path.join(BASE_DIR, "portfolio_state.json")
 SEEN_NEWS_FILE = os.path.join(BASE_DIR, "seen_news.json")
 SEEN_EARNINGS_FILE = os.path.join(BASE_DIR, "seen_earnings.json")
+PORTFOLIO_LEDGER_FILE = os.path.join(BASE_DIR, "portfolio_ledger.json")
 ENV_FILE = os.path.join(BASE_DIR, ".env")
 
 def clean_env_var(value):
@@ -214,6 +215,10 @@ HIST_MIN = -10.0
 HIST_MAX = 2.0
 SMA_LEN = 50
 SMA_PCT = 0.02 # Minimum 2% above 50 SMA
+
+# Portfolio Management Configuration
+SHARE_PORTFOLIO_WITH_CHANNEL = False  # flip to True when you're ready to publish ROI to the channel
+POSITION_SIZE_PCT = 0.10 # 10% of starting capital allocated per trade
 
 # Market-Crash Alert Configuration
 # Fires a Telegram alert when the NIFTY 50 index falls this much (or more)
@@ -394,6 +399,62 @@ def load_state():
 def save_state(state):
     atomic_save_json(state, STATE_FILE)
     backup_state_files()
+
+def load_portfolio_ledger():
+    if os.path.exists(PORTFOLIO_LEDGER_FILE):
+        try:
+            with open(PORTFOLIO_LEDGER_FILE, "r") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    # Default ledger
+    return {
+        "starting_capital": 1000000.0,
+        "cash_balance": 1000000.0,
+        "skipped_trade_count": 0
+    }
+
+def save_portfolio_ledger(ledger):
+    atomic_save_json(ledger, PORTFOLIO_LEDGER_FILE)
+
+def get_portfolio_equity(current_prices=None):
+    ledger = load_portfolio_ledger()
+    state = load_state()
+    total_stock_value = 0.0
+    
+    for ticker, trade in state.items():
+        if not trade.get('portfolio_taken', False):
+            continue
+        shares = trade.get('shares', 0)
+        if shares == 0:
+            continue
+            
+        current_price = trade.get('entry_price', 0.0)
+        if current_prices and ticker in current_prices:
+            current_price = current_prices[ticker]
+        else:
+            # Fallback to fetching live price if not provided
+            config = STOCKS.get(ticker)
+            if config:
+                try:
+                    df = fetch_tv_data_with_timeout(tv, symbol=ticker, exchange=config['exchange'], interval=Interval.in_daily, n_bars=1)
+                    if df is not None and not df.empty:
+                        current_price = df.iloc[-1]['close']
+                except Exception:
+                    pass
+        total_stock_value += (shares * current_price)
+        
+    total_equity = ledger['cash_balance'] + total_stock_value
+    starting_cap = ledger['starting_capital']
+    roi_pct = ((total_equity - starting_cap) / starting_cap) * 100 if starting_cap > 0 else 0.0
+    
+    return {
+        "starting_capital": starting_cap,
+        "cash_balance": ledger['cash_balance'],
+        "total_stock_value": total_stock_value,
+        "total_equity": total_equity,
+        "roi_pct": roi_pct
+    }
 
 def load_seen_news():
     seen_links = set()
@@ -808,6 +869,7 @@ def _send_holdings_report_internal():
     msg_lines = ["━━━━━━━━━━━━━━━━━━━━━━\n📊 <b>Weekly Portfolio Report (Buy Signals - The Last 3 Months)</b>\n━━━━━━━━━━━━━━━━━━━━━━\n"]
     
     # 1. Active Holdings
+    current_prices = {}
     if not state:
         msg_lines.append("🟩 <b>Active Holdings</b>")
         msg_lines.append("<i>No active holdings at the moment.</i>\n")
@@ -840,6 +902,7 @@ def _send_holdings_report_internal():
                 'current_price': current_price,
                 'pnl_pct': pnl_pct
             })
+            current_prices[ticker] = current_price
             
         # Sort by PnL% descending
         holdings_data.sort(key=lambda x: x['pnl_pct'], reverse=True)
@@ -902,6 +965,15 @@ def _send_holdings_report_internal():
             )
             
     # Send in chunks to avoid Telegram 4096 char limit
+    if SHARE_PORTFOLIO_WITH_CHANNEL:
+        equity = get_portfolio_equity(current_prices)
+        msg_lines.insert(1, 
+            f"💰 <b>Portfolio ROI</b>\n"
+            f"Starting Capital: ₹{equity['starting_capital']:,.0f}\n"
+            f"Current Equity: ₹{equity['total_equity']:,.0f}\n"
+            f"True ROI: {equity['roi_pct']:+.2f}%\n"
+        )
+        
     current_chunk = []
     current_len = 0
     for line in msg_lines:
@@ -1730,6 +1802,13 @@ def analyze_stocks():
                             regime_at_exit=market_regime['label']
                         )
                         
+                        # Handle portfolio cash return
+                        if trade.get('portfolio_taken'):
+                            ledger = load_portfolio_ledger()
+                            shares = trade.get('shares', 0)
+                            ledger['cash_balance'] += (shares * current_close)
+                            save_portfolio_ledger(ledger)
+                            
                         # Remove from active trades
                         del state[ticker]
                         save_state(state)
@@ -1748,6 +1827,12 @@ def analyze_stocks():
                 is_trend_intact = current_close > (sma_50 * (1 + SMA_PCT))
                 
                 if is_cooled_off and is_trend_intact:
+                    ledger = load_portfolio_ledger()
+                    allocated_amount = ledger['starting_capital'] * POSITION_SIZE_PCT
+                    shares = int(allocated_amount // current_close)
+                    cost = shares * current_close
+                    portfolio_taken = shares > 0 and ledger['cash_balance'] >= cost
+
                     msg = f"━━━━━━━━━━━━━━━━━━━━━━\n🚀 <b>BUY ALERT: {config['name']}</b>\n━━━━━━━━━━━━━━━━━━━━━━\n"
                     msg += f"🗓️ Date: {date_str}\n\n"
                     msg += f"🟢 Entry Price: ₹{current_close:.2f}\n"
@@ -1758,6 +1843,15 @@ def analyze_stocks():
                     prob = config.get('probability')
                     if prob is not None:
                         msg += f"🎲 Setup Probability: {prob * 100:.2f}%\n"
+
+                    if SHARE_PORTFOLIO_WITH_CHANNEL:
+                        if portfolio_taken:
+                            msg += f"\n💼 <b>Portfolio:</b> {shares} shares (₹{cost:,.0f}) — Cash remaining: ₹{ledger['cash_balance']-cost:,.0f}\n"
+                        else:
+                            msg += f"\n⚠️ <b>Portfolio:</b> SKIPPED — insufficient capital\n"
+                    else:
+                        print(f"[Portfolio] {ticker}: {'took ' + str(shares) + ' shares (₹' + f'{cost:,.0f}' + ')' if portfolio_taken else 'SKIPPED — insufficient capital'}")
+
                     msg += f"\n📰 <b>Recent News:</b>\n{get_news(config['name'], ticker)}\n"
                     msg += f"\n#{ticker} #NSE"
                     
@@ -1771,9 +1865,18 @@ def analyze_stocks():
                             "macd_hist_at_entry": float(hist_line),
                             "sma_pct_at_entry": float((current_close - sma_50) / sma_50 * 100),
                             "probability_at_entry": config.get('probability'),
-                            "regime_at_entry": market_regime['label']
+                            "regime_at_entry": market_regime['label'],
+                            "portfolio_taken": portfolio_taken,
+                            "shares": shares if portfolio_taken else 0,
+                            "allocated_amount": cost if portfolio_taken else 0.0
                         }
                         save_state(state)
+                        
+                        if portfolio_taken:
+                            ledger['cash_balance'] -= cost
+                        else:
+                            ledger['skipped_trade_count'] = ledger.get('skipped_trade_count', 0) + 1
+                        save_portfolio_ledger(ledger)
                     else:
                         print(f"Failed to send BUY alert for {ticker}. Will retry next cycle.")
                 else:
