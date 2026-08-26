@@ -1859,8 +1859,8 @@ def analyze_stocks():
                     if send_telegram_message(msg):
                         # Enter Trade
                         state[ticker] = {
-                            "entry_price": current_close,
-                            "highest_price": current_high,
+                            "entry_price": float(current_close),
+                            "highest_price": float(current_high),
                             "date": date_str,
                             "macd_hist_at_entry": float(hist_line),
                             "sma_pct_at_entry": float((current_close - sma_50) / sma_50 * 100),
@@ -1868,7 +1868,7 @@ def analyze_stocks():
                             "regime_at_entry": market_regime['label'],
                             "portfolio_taken": portfolio_taken,
                             "shares": shares if portfolio_taken else 0,
-                            "allocated_amount": cost if portfolio_taken else 0.0
+                            "allocated_amount": float(cost) if portfolio_taken else 0.0
                         }
                         save_state(state)
                         
