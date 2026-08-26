@@ -1831,7 +1831,7 @@ def analyze_stocks():
                     allocated_amount = ledger['starting_capital'] * POSITION_SIZE_PCT
                     shares = int(allocated_amount // current_close)
                     cost = shares * current_close
-                    portfolio_taken = shares > 0 and ledger['cash_balance'] >= cost
+                    portfolio_taken = bool(shares > 0 and ledger['cash_balance'] >= cost)
 
                     msg = f"━━━━━━━━━━━━━━━━━━━━━━\n🚀 <b>BUY ALERT: {config['name']}</b>\n━━━━━━━━━━━━━━━━━━━━━━\n"
                     msg += f"🗓️ Date: {date_str}\n\n"
