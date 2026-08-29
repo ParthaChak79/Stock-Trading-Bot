@@ -679,5 +679,15 @@
         "trail_buf": 0.12,
         "probability": 0.75,
         "yf_ticker": "ELGIEQUIP.NS"
+    },
+    "APLAPOLLO": {
+        "exchange": "NSE",
+        "name": "APL Apollo Tubes Limited",
+        "tp": 0.24,
+        "sl": 0.28,
+        "trail_act": 0.14,
+        "trail_buf": 0.10,
+        "probability": 0.92,
+        "yf_ticker": "APLAPOLLO.NS"
     }
 }

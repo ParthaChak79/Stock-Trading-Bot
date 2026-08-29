@@ -381,7 +381,8 @@ def load_stocks_config():
         "FINEORG": {"exchange": "NSE", "name": "Fine Organic Industries Ltd", "tp": 0.21, "sl": 0.24, "trail_act": 0.14, "trail_buf": 0.06, "probability": 0.91, "yf_ticker": "FINEORG.NS"},
         "NESTLEIND": {"exchange": "NSE", "name": "Nestle India Ltd", "tp": 0.23, "sl": 0.22, "trail_act": 0.15, "trail_buf": 0.11, "probability": 0.95, "yf_ticker": "NESTLEIND.NS"},
         "INDRAMEDCO": {"exchange": "NSE", "name": "Indraprastha Medical Corporation Limited", "tp": 0.27, "sl": 0.23, "trail_act": 0.19, "trail_buf": 0.06, "probability": 0.62, "yf_ticker": "INDRAMEDCO.NS"},
-        "ELGIEQUIP": {"exchange": "NSE", "name": "Elgi Equipments Limited", "tp": 0.27, "sl": 0.23, "trail_act": 0.17, "trail_buf": 0.12, "probability": 0.75, "yf_ticker": "ELGIEQUIP.NS"}
+        "ELGIEQUIP": {"exchange": "NSE", "name": "Elgi Equipments Limited", "tp": 0.27, "sl": 0.23, "trail_act": 0.17, "trail_buf": 0.12, "probability": 0.75, "yf_ticker": "ELGIEQUIP.NS"},
+        "APLAPOLLO": {"exchange": "NSE", "name": "APL Apollo Tubes Limited", "tp": 0.24, "sl": 0.28, "trail_act": 0.14, "trail_buf": 0.10, "probability": 0.92, "yf_ticker": "APLAPOLLO.NS"}
     }
 
 STOCKS = load_stocks_config()
