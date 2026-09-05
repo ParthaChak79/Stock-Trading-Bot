@@ -1,0 +1,40 @@
+{
+    "RRKABEL": {
+        "exchange": "NSE",
+        "name": "RR Kabel Ltd",
+        "tp": 0.13,
+        "sl": 0.08,
+        "trail_act": 0.04,
+        "trail_buf": 0.025,
+        "probability": 1.0,
+        "yf_ticker": "RRKABEL.NS"
+    },
+    "ELGIEQUIP": {
+        "exchange": "NSE",
+        "name": "Elgi Equipments Limited",
+        "tp": 0.27,
+        "sl": 0.27,
+        "trail_act": 0.16,
+        "trail_buf": 0.12,
+        "probability": 0.82,
+        "yf_ticker": "ELGIEQUIP.NS"
+    },
+    "BHARTIARTL": {
+        "exchange": "NSE",
+        "name": "Bharti Airtel",
+        "tp": 0.3,
+        "sl": 0.23,
+        "trail_act": 0.15,
+        "trail_buf": 0.07,
+        "probability": 0.87
+    },
+    "BEL": {
+        "exchange": "NSE",
+        "name": "Bharat Electronics",
+        "tp": 0.28,
+        "sl": 0.22,
+        "trail_act": 0.17,
+        "trail_buf": 0.11,
+        "probability": 0.81
+    }
+}

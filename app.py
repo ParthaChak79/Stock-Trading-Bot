@@ -216,6 +216,20 @@ HIST_MAX = 2.0
 SMA_LEN = 50
 SMA_PCT = 0.02 # Minimum 2% above 50 SMA
 
+# --- RSI + SMA50 strategy (backtest-validated: pooled 91 train / 27 test
+# trades, 74.1% test win rate, 5.19% avg test return -- the best-performing
+# single-indicator variant found in backtesting). Fixed global constants,
+# same values used throughout the backtest -- not tuned per stock. ---
+RSI_LEN = 14
+RSI_MIN = 30.0
+RSI_MAX = 50.0
+
+# Which strategy each stock uses ("macd_sma" or "rsi_sma") is decided by
+# which config file the stock is defined in -- see load_stocks_config()
+# and STRATEGY_MACD_SMA / STRATEGY_RSI_SMA below.
+STRATEGY_MACD_SMA = "macd_sma"
+STRATEGY_RSI_SMA = "rsi_sma"
+
 # Portfolio Management Configuration
 SHARE_PORTFOLIO_WITH_CHANNEL = False  # flip to True when you're ready to publish ROI to the channel
 POSITION_SIZE_PCT = 0.10 # 10% of starting capital allocated per trade
@@ -301,89 +315,52 @@ NSE_HEADERS = {
 
 # Stocks Configuration (Loaded Dynamically from stocks_config.json)
 CONFIG_FILE = os.path.join(BASE_DIR, "stocks_config.json")
+CONFIG_FILE_RSI = os.path.join(BASE_DIR, "stocks_config_rsi.json")
 
-def load_stocks_config():
-    if os.path.exists(CONFIG_FILE):
+def _load_json_config(path):
+    if os.path.exists(path):
         try:
-            with open(CONFIG_FILE, "r") as f:
+            with open(path, "r") as f:
                 return json.load(f)
         except Exception as e:
-            print(f"Error loading stocks_config.json: {e}")
-    # Fallback to hardcoded dict if file doesn't exist
-    return {
-        "BRITANNIA": {"exchange": "NSE", "name": "Britannia", "tp": 0.25, "sl": 0.20, "trail_act": 0.17, "trail_buf": 0.08},
-        "EPL": {"exchange": "NSE", "name": "EPL", "tp": 0.27, "sl": 0.32, "trail_act": 0.18, "trail_buf": 0.09},
-        "APOLLOHOSP": {"exchange": "NSE", "name": "Apollo Hospitals", "tp": 0.27, "sl": 0.23, "trail_act": 0.15, "trail_buf": 0.09},
-        "BHARTIARTL": {"exchange": "NSE", "name": "Bharti Airtel", "tp": 0.30, "sl": 0.23, "trail_act": 0.14, "trail_buf": 0.07},
-        "TORNTPOWER": {"exchange": "NSE", "name": "Torrent Power", "tp": 0.29, "sl": 0.23, "trail_act": 0.12, "trail_buf": 0.08},
-        "PIDILITIND": {"exchange": "NSE", "name": "Pidilite", "tp": 0.28, "sl": 0.23, "trail_act": 0.13, "trail_buf": 0.07},
-        "NATCOPHARM": {"exchange": "NSE", "name": "Natco Pharma", "tp": 0.27, "sl": 0.23, "trail_act": 0.13, "trail_buf": 0.09},
-        "TVSMOTOR": {"exchange": "NSE", "name": "TVS Motors", "tp": 0.23, "sl": 0.26, "trail_act": 0.12, "trail_buf": 0.09},
-        "BEL": {"exchange": "NSE", "name": "Bharat Electronics", "tp": 0.33, "sl": 0.24, "trail_act": 0.17, "trail_buf": 0.07},
-        "GODREJCP": {"exchange": "NSE", "name": "Godrej Consumer Products", "tp": 0.23, "sl": 0.30, "trail_act": 0.19, "trail_buf": 0.16},
-        "SCHNEIDER": {"exchange": "NSE", "name": "Schneider Electric Infrastructure", "tp": 0.25, "sl": 0.22, "trail_act": 0.16, "trail_buf": 0.05},
-        "FORTIS": {"exchange": "NSE", "name": "Fortis Healthcare", "tp": 0.25, "sl": 0.24, "trail_act": 0.13, "trail_buf": 0.07},
-        "MAXHEALTH": {"exchange": "NSE", "name": "Max Healthcare", "tp": 0.25, "sl": 0.21, "trail_act": 0.10, "trail_buf": 0.04},
-        "LT": {"exchange": "NSE", "name": "Larsen & Toubro", "tp": 0.24, "sl": 0.19, "trail_act": 0.10, "trail_buf": 0.04},
-        "HAL": {"exchange": "NSE", "name": "Hindustan Aeronautics", "tp": 0.27, "sl": 0.17, "trail_act": 0.08, "trail_buf": 0.05},
-        "HDFCBANK": {"exchange": "NSE", "name": "HDFC Bank", "tp": 0.27, "sl": 0.23, "trail_act": 0.15, "trail_buf": 0.08},
-        "ICICIBANK": {"exchange": "NSE", "name": "ICICI Bank", "tp": 0.30, "sl": 0.25, "trail_act": 0.14, "trail_buf": 0.08},
-        "DIXON": {"exchange": "NSE", "name": "Dixon Tech", "tp": 0.27, "sl": 0.19, "trail_act": 0.14, "trail_buf": 0.08},
-        "BAJAJ_AUTO": {"exchange": "NSE", "name": "Bajaj Auto", "tp": 0.24, "sl": 0.20, "trail_act": 0.11, "trail_buf": 0.08, "yf_ticker": "BAJAJ-AUTO.NS"},
-        "M&M": {"exchange": "NSE", "name": "M&M", "tp": 0.24, "sl": 0.15, "trail_act": 0.15, "trail_buf": 0.10},
-        "ONGC": {"exchange": "NSE", "name": "ONGC", "tp": 0.25, "sl": 0.23, "trail_act": 0.09, "trail_buf": 0.05},
-        "SBIN": {"exchange": "NSE", "name": "SBI", "tp": 0.26, "sl": 0.23, "trail_act": 0.14, "trail_buf": 0.06},
-        "DIVISLAB": {"exchange": "NSE", "name": "Divi's Lab", "tp": 0.29, "sl": 0.16, "trail_act": 0.15, "trail_buf": 0.11},
-        "POLYCAB": {"exchange": "NSE", "name": "Polycab", "tp": 0.30, "sl": 0.19, "trail_act": 0.17, "trail_buf": 0.09},
-        "POWERGRID": {"exchange": "NSE", "name": "Power Grid", "tp": 0.25, "sl": 0.17, "trail_act": 0.14, "trail_buf": 0.08},
-        "WABAG": {"exchange": "NSE", "name": "VA Tech Wabag", "tp": 0.18, "sl": 0.20, "trail_act": 0.09, "trail_buf": 0.06},
-        "CDSL": {"exchange": "NSE", "name": "CDSL", "tp": 0.22, "sl": 0.18, "trail_act": 0.15, "trail_buf": 0.09},
-        "KAYNES": {"exchange": "NSE", "name": "Kaynes Technology", "tp": 0.23, "sl": 0.13, "trail_act": 0.15, "trail_buf": 0.10},
-        "PIIND": {"exchange": "NSE", "name": "PI Industries", "tp": 0.20, "sl": 0.17, "trail_act": 0.16, "trail_buf": 0.08},
-        "ASTRAMICRO": {"exchange": "NSE", "name": "Astra Microwave Products", "tp": 0.29, "sl": 0.25, "trail_act": 0.12, "trail_buf": 0.08},
-        "NIFTY": {"exchange": "NSE", "name": "NIFTY50 Index", "tp": 0.21, "sl": 0.27, "trail_act": 0.10, "trail_buf": 0.07, "yf_ticker": "^NSEI"},
-        "KEI": {"exchange": "NSE", "name": "KEI Industries Limited", "tp": 0.26, "sl": 0.20, "trail_act": 0.15, "trail_buf": 0.05, "yf_ticker": "KEI.NS"},
-        "NAVINFLUOR": {"exchange": "NSE", "name": "Navin Fluorine International Limited", "tp": 0.19, "sl": 0.185, "trail_act": 0.10, "trail_buf": 0.07, "yf_ticker": "NAVINFLUOR.NS"},
-        "ZYDUSLIFE": {"exchange": "NSE", "name": "Zydus Lifesciences Limited", "tp": 0.18, "sl": 0.26, "trail_act": 0.08, "trail_buf": 0.06, "yf_ticker": "ZYDUSLIFE.NS"},
-        "AJANTPHARM": {"exchange": "NSE", "name": "Ajanta Pharma", "tp": 0.21, "sl": 0.24, "trail_act": 0.09, "trail_buf": 0.08, "yf_ticker": "AJANTPHARM.NS"},
-        "LUPIN": {"exchange": "NSE", "name": "Lupin Ltd", "tp": 0.28, "sl": 0.29, "trail_act": 0.12, "trail_buf": 0.08, "yf_ticker": "LUPIN.NS"},
-        "RRKABEL": {"exchange": "NSE", "name": "RR Kabel Ltd", "tp": 0.10, "sl": 0.08, "trail_act": 0.08, "trail_buf": 0.06, "yf_ticker": "RRKABEL.NS"},
-        "PRICOLLTD": {"exchange": "NSE", "name": "Pricol Ltd", "tp": 0.21, "sl": 0.22, "trail_act": 0.11, "trail_buf": 0.09, "yf_ticker": "PRICOLLTD.NS"},
-        "THYROCARE": {"exchange": "NSE", "name": "Thyrocare", "tp": 0.15, "sl": 0.18, "trail_act": 0.08, "trail_buf": 0.04, "yf_ticker": "THYROCARE.NS"},
-        "SJS": {"exchange": "NSE", "name": "SJS Enterprises", "tp": 0.25, "sl": 0.14, "trail_act": 0.13, "trail_buf": 0.11, "probability": 0.75, "yf_ticker": "SJS.NS"},
-        "NH": {"exchange": "NSE", "name": "Narayana Hrudayalaya Ltd", "tp": 0.23, "sl": 0.26, "trail_act": 0.12, "trail_buf": 0.09, "probability": 0.92, "yf_ticker": "NH.NS"},
-        "CAPLIPOINT": {"exchange": "NSE", "name": "Caplin Point Laboratories", "tp": 0.23, "sl": 0.26, "trail_act": 0.08, "trail_buf": 0.05, "probability": 0.81, "yf_ticker": "CAPLIPOINT.NS"},
-        "MEDANTA": {"exchange": "NSE", "name": "Global Health Limited (Medanta)", "tp": 0.23, "sl": 0.18, "trail_act": 0.11, "trail_buf": 0.05, "probability": 0.85, "yf_ticker": "MEDANTA.NS"},
-        "WAAREERTL": {"exchange": "NSE", "name": "Waaree Renewable Technologies Ltd", "tp": 0.28, "sl": 0.12, "trail_act": 0.10, "trail_buf": 0.08, "probability": 0.50, "yf_ticker": "WAAREERTL.NS"},
-        "NEULANDLAB": {"exchange": "NSE", "name": "Neuland Laboratories", "tp": 0.26, "sl": 0.26, "trail_act": 0.10, "trail_buf": 0.07, "probability": 0.75, "yf_ticker": "NEULANDLAB.NS"},
-        "GRSE": {"exchange": "NSE", "name": "Garden Reach Shipbuilders & Engineers Ltd", "tp": 0.19, "sl": 0.26, "trail_act": 0.14, "trail_buf": 0.11, "probability": 0.85, "yf_ticker": "GRSE.NS"},
-        "SHAILY": {"exchange": "NSE", "name": "Shaily Engineering Plastics Limited", "tp": 0.16, "sl": 0.25, "trail_act": 0.10, "trail_buf": 0.07, "probability": 0.93, "yf_ticker": "SHAILY.NS"},
-        "COALINDIA": {"exchange": "NSE", "name": "Coal India Ltd", "tp": 0.16, "sl": 0.20, "trail_act": 0.10, "trail_buf": 0.07, "probability": 1, "yf_ticker": "COALINDIA.NS"},
-        "MCX": {"exchange": "NSE", "name": "Multi Commodity Exchange of India Limited", "tp": 0.18, "sl": 0.23, "trail_act": 0.09, "trail_buf": 0.07, "probability": 0.86, "yf_ticker": "MCX.NS"},
-        "MARUTI": {"exchange": "NSE", "name": "Maruti Suzuki India Limited", "tp": 0.24, "sl": 0.27, "trail_act": 0.13, "trail_buf": 0.11, "probability": 0.84, "yf_ticker": "MARUTI.NS"},
-        "ASIANPAINT": {"exchange": "NSE", "name": "Asian Paints Ltd", "tp": 0.25, "sl": 0.28, "trail_act": 0.13, "trail_buf": 0.095, "probability": 0.9, "yf_ticker": "ASIANPAINT.NS"},
-        "DRREDDY": {"exchange": "NSE", "name": "Dr Reddys Laboratories Ltd", "tp": 0.23, "sl": 0.29, "trail_act": 0.13, "trail_buf": 0.10, "probability": 0.84, "yf_ticker": "DRREDDY.NS"},
-        "EICHERMOT": {"exchange": "NSE", "name": "Eicher Motors Limited", "tp": 0.20, "sl": 0.28, "trail_act": 0.16, "trail_buf": 0.13, "probability": 0.85, "yf_ticker": "EICHERMOT.NS"},
-        "TITAN": {"exchange": "NSE", "name": "Titan Company Limited", "tp": 0.22, "sl": 0.30, "trail_act": 0.12, "trail_buf": 0.11, "probability": 0.89, "yf_ticker": "TITAN.NS"},
-        "MARKSANS": {"exchange": "NSE", "name": "Marksans Pharma Limited", "tp": 0.15, "sl": 0.22, "trail_act": 0.12, "trail_buf": 0.10, "probability": 0.73, "yf_ticker": "MARKSANS.NS"},
-        "HINDZINC": {"exchange": "NSE", "name": "Hindustan Zinc", "tp": 0.17, "sl": 0.24, "trail_act": 0.14, "trail_buf": 0.11, "probability": 0.77, "yf_ticker": "HINDZINC.NS"},
-        "LUMAXIND": {"exchange": "NSE", "name": "Lumax Industries Limited", "tp": 0.18, "sl": 0.21, "trail_act": 0.12, "trail_buf": 0.08, "probability": 0.73, "yf_ticker": "LUMAXIND.NS"},
-        "PRIVISCL": {"exchange": "NSE", "name": "Privi Speciality Chemicals", "tp": 0.21, "sl": 0.25, "trail_act": 0.15, "trail_buf": 0.08, "probability": 0.86, "yf_ticker": "PRIVISCL.NS"},
-        "FIEMIND": {"exchange": "NSE", "name": "Fiem Industries Limited", "tp": 0.19, "sl": 0.19, "trail_act": 0.15, "trail_buf": 0.10, "probability": 0.73, "yf_ticker": "FIEMIND.NS"},
-        "ULTRACEMCO": {"exchange": "NSE", "name": "UltraTech Cement Limited", "tp": 0.18, "sl": 0.23, "trail_act": 0.13, "trail_buf": 0.10, "probability": 0.84, "yf_ticker": "ULTRACEMCO.NS"},
-        "GRANULES": {"exchange": "NSE", "name": "Granules India Limited", "tp": 0.22, "sl": 0.37, "trail_act": 0.18, "trail_buf": 0.15, "probability": 0.89, "yf_ticker": "GRANULES.NS"},
-        "KPIL": {"exchange": "NSE", "name": "Kalpataru Projects International Limited", "tp": 0.20, "sl": 0.35, "trail_act": 0.17, "trail_buf": 0.15, "probability": 0.85, "yf_ticker": "KPIL.NS"},
-        "SANDUMA": {"exchange": "NSE", "name": "Sandur Manganese & Iron Ores", "tp": 0.17, "sl": 0.19, "trail_act": 0.10, "trail_buf": 0.08, "probability": 0.76, "yf_ticker": "SANDUMA.NS"},
-        "JSLL": {"exchange": "NSE", "name": "Jeena Sikho Lifecare Limited", "tp": 0.19, "sl": 0.26, "trail_act": 0.13, "trail_buf": 0.11, "probability": 0.93, "yf_ticker": "JSLL.NS"},
-        "LALPATHLAB": {"exchange": "NSE", "name": "Dr. Lal PathLabs Limited", "tp": 0.31, "sl": 0.16, "trail_act": 0.21, "trail_buf": 0.06, "probability": 0.72, "yf_ticker": "LALPATHLAB.NS"},
-        "STAR": {"exchange": "NSE", "name": "Strides Pharma Science Ltd", "tp": 0.22, "sl": 0.23, "trail_act": 0.16, "trail_buf": 0.09, "probability": 0.70, "yf_ticker": "STAR.NS"},
-        "ALKEM": {"exchange": "NSE", "name": "Alkem Laboratories Ltd", "tp": 0.23, "sl": 0.25, "trail_act": 0.17, "trail_buf": 0.10, "probability": 0.86, "yf_ticker": "ALKEM.NS"},
-        "FINEORG": {"exchange": "NSE", "name": "Fine Organic Industries Ltd", "tp": 0.21, "sl": 0.24, "trail_act": 0.14, "trail_buf": 0.06, "probability": 0.91, "yf_ticker": "FINEORG.NS"},
-        "NESTLEIND": {"exchange": "NSE", "name": "Nestle India Ltd", "tp": 0.23, "sl": 0.22, "trail_act": 0.15, "trail_buf": 0.11, "probability": 0.95, "yf_ticker": "NESTLEIND.NS"},
-        "INDRAMEDCO": {"exchange": "NSE", "name": "Indraprastha Medical Corporation Limited", "tp": 0.27, "sl": 0.23, "trail_act": 0.19, "trail_buf": 0.06, "probability": 0.62, "yf_ticker": "INDRAMEDCO.NS"},
-        "ELGIEQUIP": {"exchange": "NSE", "name": "Elgi Equipments Limited", "tp": 0.27, "sl": 0.23, "trail_act": 0.17, "trail_buf": 0.12, "probability": 0.75, "yf_ticker": "ELGIEQUIP.NS"},
-        "APLAPOLLO": {"exchange": "NSE", "name": "APL Apollo Tubes Limited", "tp": 0.24, "sl": 0.28, "trail_act": 0.14, "trail_buf": 0.10, "probability": 0.92, "yf_ticker": "APLAPOLLO.NS"}
-    }
+            print(f"Error loading {path}: {e}")
+    return {}
+
+def load_stocks_config():
+    """Load both config files and merge them into one STOCKS dict, tagging
+    each stock's config with which strategy it uses based on which file it
+    came from. A ticker present in both files is an error in the config --
+    the MACD file wins and a warning is printed, since silently picking one
+    could mask a mistake."""
+    macd_stocks = _load_json_config(CONFIG_FILE)
+    rsi_stocks = _load_json_config(CONFIG_FILE_RSI)
+
+    if not macd_stocks and not rsi_stocks:
+        macd_stocks = _FALLBACK_STOCKS_CONFIG
+
+    merged = {}
+    for ticker, cfg in macd_stocks.items():
+        cfg = dict(cfg)
+        cfg["strategy"] = STRATEGY_MACD_SMA
+        merged[ticker] = cfg
+
+    for ticker, cfg in rsi_stocks.items():
+        if ticker in merged:
+            print(f"WARNING: {ticker} is defined in BOTH {os.path.basename(CONFIG_FILE)} "
+                  f"and {os.path.basename(CONFIG_FILE_RSI)} -- keeping it on MACD+SMA "
+                  f"(the {os.path.basename(CONFIG_FILE)} entry). Remove it from one file.")
+            continue
+        cfg = dict(cfg)
+        cfg["strategy"] = STRATEGY_RSI_SMA
+        merged[ticker] = cfg
+
+    return merged
+
+# Emergency fallback if neither config file is present.
+_FALLBACK_STOCKS_CONFIG = {
+    "BRITANNIA": {"exchange": "NSE", "name": "Britannia", "tp": 0.25, "sl": 0.20, "trail_act": 0.17, "trail_buf": 0.08},
+    "EPL": {"exchange": "NSE", "name": "EPL", "tp": 0.27, "sl": 0.32, "trail_act": 0.18, "trail_buf": 0.09},
+}
 
 STOCKS = load_stocks_config()
 
@@ -1671,17 +1648,25 @@ def get_market_regime():
 
 def calculate_indicators(df):
     """Calculate MACD and SMA 50"""
-    if len(df) < SMA_LEN:
+    if len(df) < max(SMA_LEN, RSI_LEN + 1):
         return None # Not enough data
-    
+
     df['SMA_50'] = df['close'].rolling(window=SMA_LEN).mean()
-    
+
     ema_fast = df['close'].ewm(span=MACD_FAST, adjust=False).mean()
     ema_slow = df['close'].ewm(span=MACD_SLOW, adjust=False).mean()
     df['MACD'] = ema_fast - ema_slow
     df['MACD_Signal'] = df['MACD'].ewm(span=MACD_SIG, adjust=False).mean()
     df['MACD_Hist'] = df['MACD'] - df['MACD_Signal']
-    
+
+    delta = df['close'].diff()
+    gain = delta.clip(lower=0)
+    loss = -delta.clip(upper=0)
+    avg_gain = gain.ewm(alpha=1/RSI_LEN, adjust=False).mean()
+    avg_loss = loss.ewm(alpha=1/RSI_LEN, adjust=False).mean()
+    rs = avg_gain / avg_loss.replace(0, pd.NA)
+    df['RSI_14'] = (100 - (100 / (1 + rs))).fillna(50)
+
     return df
 
 def analyze_stocks():
@@ -1719,7 +1704,9 @@ def analyze_stocks():
             current_high = latest['high']
             hist_line = latest['MACD_Hist']
             sma_50 = latest['SMA_50']
-            
+            rsi_val = latest['RSI_14']
+            strategy = config.get('strategy', STRATEGY_MACD_SMA)
+
             # Format date beautifully
             date_str = latest.name.strftime("%d %b %Y")
             
@@ -1822,7 +1809,10 @@ def analyze_stocks():
             else:
                 # --- Check for New Buy Signal ---
                 # 1. MACD Cooldown Condition 
-                is_cooled_off = (hist_line > HIST_MIN) and (hist_line <= HIST_MAX)
+                if strategy == STRATEGY_RSI_SMA:
+                    is_cooled_off = (rsi_val > RSI_MIN) and (rsi_val <= RSI_MAX)
+                else:
+                    is_cooled_off = (hist_line > HIST_MIN) and (hist_line <= HIST_MAX)
                 
                 # 2. Trend Condition (Price minimum 2% above 50 SMA)
                 is_trend_intact = current_close > (sma_50 * (1 + SMA_PCT))

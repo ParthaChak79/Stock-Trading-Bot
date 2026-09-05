@@ -21,19 +21,10 @@
         "exchange": "NSE",
         "name": "Apollo Hospitals",
         "tp": 0.27,
-        "sl": 0.23,
-        "trail_act": 0.15,
-        "trail_buf": 0.09,
-        "probability": 0.80
-    },
-    "BHARTIARTL": {
-        "exchange": "NSE",
-        "name": "Bharti Airtel",
-        "tp": 0.3,
-        "sl": 0.23,
-        "trail_act": 0.14,
-        "trail_buf": 0.07,
-        "probability": 0.82
+        "sl": 0.30,
+        "trail_act": 0.17,
+        "trail_buf": 0.11,
+        "probability": 0.85
     },
     "TORNTPOWER": {
         "exchange": "NSE",
@@ -70,15 +61,6 @@
         "trail_act": 0.12,
         "trail_buf": 0.09,
         "probability": 0.80
-    },
-    "BEL": {
-        "exchange": "NSE",
-        "name": "Bharat Electronics",
-        "tp": 0.33,
-        "sl": 0.27,
-        "trail_act": 0.17,
-        "trail_buf": 0.07,
-        "probability": 0.70
     },
     "GODREJCP": {
         "exchange": "NSE",
@@ -329,16 +311,6 @@
         "trail_buf": 0.08,
         "probability": 0.85,
         "yf_ticker": "LUPIN.NS"
-    },
-    "RRKABEL": {
-        "exchange": "NSE",
-        "name": "RR Kabel Ltd",
-        "tp": 0.13,
-        "sl": 0.16,
-        "trail_act": 0.08,
-        "trail_buf": 0.07,
-        "probability": 0.75,
-        "yf_ticker": "RRKABEL.NS"
     },
     "PRICOLLTD": {
         "exchange": "NSE",
@@ -669,16 +641,6 @@
         "trail_buf": 0.06,
         "probability": 0.62,
         "yf_ticker": "INDRAMEDCO.NS"
-    },
-    "ELGIEQUIP": {
-        "exchange": "NSE",
-        "name": "Elgi Equipments Limited",
-        "tp": 0.27,
-        "sl": 0.23,
-        "trail_act": 0.17,
-        "trail_buf": 0.12,
-        "probability": 0.75,
-        "yf_ticker": "ELGIEQUIP.NS"
     },
     "APLAPOLLO": {
         "exchange": "NSE",
