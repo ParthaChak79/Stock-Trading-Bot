@@ -36,5 +36,131 @@
         "trail_act": 0.17,
         "trail_buf": 0.11,
         "probability": 0.81
+    },
+    "ICICIBANK": {
+        "exchange": "NSE",
+        "name": "ICICI Bank",
+        "tp": 0.30,
+        "sl": 0.23,
+        "trail_act": 0.14,
+        "trail_buf": 0.12,
+        "probability": 0.85
+    },
+    "ASTRAMICRO": {
+        "exchange": "NSE",
+        "name": "Astra Microwave Products",
+        "tp": 0.29,
+        "sl": 0.27,
+        "trail_act": 0.11,
+        "trail_buf": 0.09,
+        "probability": 0.84
+    },
+    "POWERGRID": {
+        "exchange": "NSE",
+        "name": "Power Grid",
+        "tp": 0.23,
+        "sl": 0.18,
+        "trail_act": 0.14,
+        "trail_buf": 0.09,
+        "probability": 0.80
+    },
+    "PIIND": {
+        "exchange": "NSE",
+        "name": "PI Industries",
+        "tp": 0.22,
+        "sl": 0.19,
+        "trail_act": 0.13,
+        "trail_buf": 0.11,
+        "probability": 0.85
+    },
+    "KEI": {
+        "exchange": "NSE",
+        "name": "KEI Industries Limited",
+        "tp": 0.29,
+        "sl": 0.19,
+        "trail_act": 0.18,
+        "trail_buf": 0.09,
+        "probability": 0.83,
+        "yf_ticker": "KEI.NS"
+    },
+    "AJANTPHARM": {
+        "exchange": "NSE",
+        "name": "Ajanta Pharma",
+        "tp": 0.19,
+        "sl": 0.20,
+        "trail_act": 0.09,
+        "trail_buf": 0.05,
+        "probability": 0.82,
+        "yf_ticker": "AJANTPHARM.NS"
+    },
+    "PRICOLLTD": {
+        "exchange": "NSE",
+        "name": "Pricol Ltd",
+        "tp": 0.27,
+        "sl": 0.21,
+        "trail_act": 0.13,
+        "trail_buf": 0.07,
+        "probability": 0.88,
+        "yf_ticker": "PRICOLLTD.NS"
+    },
+    "THYROCARE": {
+        "exchange": "NSE",
+        "name": "Thyrocare",
+        "tp": 0.34,
+        "sl": 0.16,
+        "trail_act": 0.08,
+        "trail_buf": 0.04,
+        "probability": 0.83,
+        "yf_ticker": "THYROCARE.NS"
+    },
+    "SJS": {
+        "exchange": "NSE",
+        "name": "SJS Enterprises",
+        "tp": 0.30,
+        "sl": 0.13,
+        "trail_act": 0.17,
+        "trail_buf": 0.11,
+        "probability": 0.85,
+        "yf_ticker": "SJS.NS"
+    },
+    "CAPLIPOINT": {
+        "exchange": "NSE",
+        "name": "Caplin Point Laboratories",
+        "tp": 0.24,
+        "sl": 0.27,
+        "trail_act": 0.11,
+        "trail_buf": 0.07,
+        "probability": 0.84,
+        "yf_ticker": "CAPLIPOINT.NS"
+    },
+    "NEULANDLAB": {
+        "exchange": "NSE",
+        "name": "Neuland Laboratories",
+        "tp": 0.29,
+        "sl": 0.21,
+        "trail_act": 0.19,
+        "trail_buf": 0.12,
+        "probability": 0.64,
+        "yf_ticker": "NEULANDLAB.NS"
+    },
+    "LALPATHLAB": {
+        "exchange": "NSE",
+        "name": "Dr. Lal PathLabs Limited",
+        "tp": 0.28,
+        "sl": 0.09,
+        "trail_act": 0.10,
+        "trail_buf": 0.06,
+        "probability": 0.85,
+        "yf_ticker": "LALPATHLAB.NS"
+    },
+    "INDRAMEDCO": {
+        "exchange": "NSE",
+        "name": "Indraprastha Medical Corporation Limited",
+        "tp": 0.28,
+        "sl": 0.20,
+        "trail_act": 0.23,
+        "trail_buf": 0.17,
+        "probability": 0.65,
+        "yf_ticker": "INDRAMEDCO.NS"
     }
 }

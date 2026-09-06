@@ -113,8 +113,8 @@
         "tp": 0.27,
         "sl": 0.17,
         "trail_act": 0.08,
-        "trail_buf": 0.05,
-        "probability": 0.80
+        "trail_buf": 0.06,
+        "probability": 0.82
     },
     "HDFCBANK": {
         "exchange": "NSE",
@@ -124,15 +124,6 @@
         "trail_act": 0.15,
         "trail_buf": 0.08,
         "probability": 0.80
-    },
-    "ICICIBANK": {
-        "exchange": "NSE",
-        "name": "ICICI Bank",
-        "tp": 0.30,
-        "sl": 0.25,
-        "trail_act": 0.14,
-        "trail_buf": 0.08,
-        "probability": 0.83
     },
     "DIXON": {
         "exchange": "NSE",
@@ -198,15 +189,6 @@
         "trail_buf": 0.09,
         "probability": 0.89
     },
-    "POWERGRID": {
-        "exchange": "NSE",
-        "name": "Power Grid",
-        "tp": 0.25,
-        "sl": 0.17,
-        "trail_act": 0.14,
-        "trail_buf": 0.08,
-        "probability": 0.71
-    },
     "WABAG": {
         "exchange": "NSE",
         "name": "VA Tech Wabag",
@@ -234,24 +216,6 @@
         "trail_buf": 0.1,
         "probability": 0.82
     },
-    "PIIND": {
-        "exchange": "NSE",
-        "name": "PI Industries",
-        "tp": 0.2,
-        "sl": 0.17,
-        "trail_act": 0.16,
-        "trail_buf": 0.08,
-        "probability": 0.8
-    },
-    "ASTRAMICRO": {
-        "exchange": "NSE",
-        "name": "Astra Microwave Products",
-        "tp": 0.29,
-        "sl": 0.25,
-        "trail_act": 0.12,
-        "trail_buf": 0.08,
-        "probability": 0.72
-    },
     "NIFTY": {
         "exchange": "NSE",
         "name": "NIFTY50 Index",
@@ -261,16 +225,6 @@
         "trail_buf": 0.07,
         "probability": 0.84,
         "yf_ticker": "^NSEI"
-    },
-    "KEI": {
-        "exchange": "NSE",
-        "name": "KEI Industries Limited",
-        "tp": 0.26,
-        "sl": 0.20,
-        "trail_act": 0.15,
-        "trail_buf": 0.05,
-        "probability": 0.80,
-        "yf_ticker": "KEI.NS"
     },
     "NAVINFLUOR": {
         "exchange": "NSE",
@@ -292,16 +246,6 @@
         "probability": 0.86,
         "yf_ticker": "ZYDUSLIFE.NS"
     },
-    "AJANTPHARM": {
-        "exchange": "NSE",
-        "name": "Ajanta Pharma",
-        "tp": 0.21,
-        "sl": 0.24,
-        "trail_act": 0.09,
-        "trail_buf": 0.08,
-        "probability": 0.77,
-        "yf_ticker": "AJANTPHARM.NS"
-    },
     "LUPIN": {
         "exchange": "NSE",
         "name": "Lupin Ltd",
@@ -312,36 +256,6 @@
         "probability": 0.85,
         "yf_ticker": "LUPIN.NS"
     },
-    "PRICOLLTD": {
-        "exchange": "NSE",
-        "name": "Pricol Ltd",
-        "tp": 0.21,
-        "sl": 0.22,
-        "trail_act": 0.11,
-        "trail_buf": 0.09,
-        "probability": 0.78,
-        "yf_ticker": "PRICOLLTD.NS"
-    },
-    "THYROCARE": {
-        "exchange": "NSE",
-        "name": "Thyrocare",
-        "tp": 0.15,
-        "sl": 0.18,
-        "trail_act": 0.08,
-        "trail_buf": 0.04,
-        "probability": 0.81,
-        "yf_ticker": "THYROCARE.NS"
-    },
-    "SJS": {
-        "exchange": "NSE",
-        "name": "SJS Enterprises",
-        "tp": 0.25,
-        "sl": 0.14,
-        "trail_act": 0.13,
-        "trail_buf": 0.11,
-        "probability": 0.75,
-        "yf_ticker": "SJS.NS"
-    },
     "NH": {
         "exchange": "NSE",
         "name": "Narayana Hrudayalaya Ltd",
@@ -351,16 +265,6 @@
         "trail_buf": 0.09,
         "probability": 0.92,
         "yf_ticker": "NH.NS"
-    },
-    "CAPLIPOINT": {
-        "exchange": "NSE",
-        "name": "Caplin Point Laboratories",
-        "tp": 0.23,
-        "sl": 0.26,
-        "trail_act": 0.08,
-        "trail_buf": 0.05,
-        "probability": 0.81,
-        "yf_ticker": "CAPLIPOINT.NS"
     },
     "MEDANTA": {
         "exchange": "NSE",
@@ -381,16 +285,6 @@
         "trail_buf": 0.08,
         "probability": 0.50,
         "yf_ticker": "WAAREERTL.NS"
-    },
-    "NEULANDLAB": {
-        "exchange": "NSE",
-        "name": "Neuland Laboratories",
-        "tp": 0.26,
-        "sl": 0.26,
-        "trail_act": 0.10,
-        "trail_buf": 0.07,
-        "probability": 0.75,
-        "yf_ticker": "NEULANDLAB.NS"
     },
     "GRSE": {
         "exchange": "NSE",
@@ -582,16 +476,6 @@
         "probability": 0.93,
         "yf_ticker": "JSLL.NS"
     },
-    "LALPATHLAB": {
-        "exchange": "NSE",
-        "name": "Dr. Lal PathLabs Limited",
-        "tp": 0.31,
-        "sl": 0.16,
-        "trail_act": 0.21,
-        "trail_buf": 0.06,
-        "probability": 0.72,
-        "yf_ticker": "LALPATHLAB.NS"
-    },
     "STAR": {
         "exchange": "NSE",
         "name": "Strides Pharma Science Ltd",
@@ -631,16 +515,6 @@
         "trail_buf": 0.11,
         "probability": 0.95,
         "yf_ticker": "NESTLEIND.NS"
-    },
-    "INDRAMEDCO": {
-        "exchange": "NSE",
-        "name": "Indraprastha Medical Corporation Limited",
-        "tp": 0.27,
-        "sl": 0.23,
-        "trail_act": 0.19,
-        "trail_buf": 0.06,
-        "probability": 0.62,
-        "yf_ticker": "INDRAMEDCO.NS"
     },
     "APLAPOLLO": {
         "exchange": "NSE",
