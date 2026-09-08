@@ -525,5 +525,15 @@
         "trail_buf": 0.10,
         "probability": 0.92,
         "yf_ticker": "APLAPOLLO.NS"
+    },
+    "CEMPRO": {
+        "exchange": "NSE",
+        "name": "CemIndia Projects Ltd",
+        "tp": 0.29,
+        "sl": 0.29,
+        "trail_act": 0.11,
+        "trail_buf": 0.08,
+        "probability": 0.82,
+        "yf_ticker": "CEMPRO.NS"
     }
 }
